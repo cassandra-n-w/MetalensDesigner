@@ -1,4 +1,4 @@
-classdef Simulation
+classdef Simulation < handle
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -11,6 +11,9 @@ classdef Simulation
         dy
         x
         y
+        dims
+        E_saved
+        E_current
     end
     
     methods
@@ -27,6 +30,7 @@ classdef Simulation
             
             % set up an x-y grid with the center at 0,0
             dims = diam*4 / (obj.dx);
+            obj.dims = dims;
             
             xbounds = [-(dims(1)-1)/2, (dims(1)-1)/2];
             ybounds = [-(dims(2)-1)/2, (dims(2)-1)/2];
@@ -36,21 +40,36 @@ classdef Simulation
             obj.x = x * dx;
             obj.y = y * dy;
 
-            
+            obj.E_current = zeros(obj.dims(1), obj.dims(2), obj.frequency);
         end
         
         function phasepattern = calc_ideal_phase(obj)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
+            quicksim = Simulation(obj.lens_model, obj.designfrequency, obj.designfrequency);
+            
+            quicksim.setup();
+            
+            w0 = quicksim.calc_waist();
+            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
+            
+            quicksim.initialize_E_field(gaussfunc);
+            
+            r = sqrt(obj.x.^2 + obj.y.^2);
+            mag = r < (obj.lens_model.diameter/2);
+            
+            quicksim.propagate(obj.lens_model.focal_length);
+            E = quicksim.E_current;
+            
+            phasepattern = mag .* ang(E);
         end
         
         function phasepattern = calc_gaussian_phase(obj)
             lambda = obj.c / (obj.designfrequency);
             r = sqrt(obj.x.^2 + obj.y.^2);
-            mag = r < radius;
+            mag = r < (obj.lens_model.diameter/2);
             
-            w0 = ; % presumed beam waist of receiver in mm
+            w0 = obj.calc_waist(); % presumed beam waist of receiver in mm
 
             zr = pi * w0^2 / lambda; %confocal distance
 
@@ -63,26 +82,47 @@ classdef Simulation
         end
         
         function waist = calc_waist(obj)
+            % approximate the desired far-field beam angle of the receiver
+            % horn as z_focus / (2 * diameter of lens)
+            theta0 = obj.lens_model.focal_length / (2*obj.lens_model.diameter);
+            
+            waist = pi*theta0 / obj.designfrequency;
+        end
+        
+        function initialize_E_field(obj, E_func)
+            
+            for i = 1:length(obj.frequencies)
+                f = obj.frequencies(i);
+                obj.E_current(:,:,i) = E_func(obj.x, obj.y, f);
+            end         
             
         end
         
-        function setup(obj)
+        function propagate(obj, z)
+            [ks, lambdas] = Simulation.f_to_k_lambda(obj.frequencies);
+            for i = 1:length(obj.frequencies)
+                k = ks(i);
+                [save, final] = obj.PropagateField(obj.E_current, z, k);
+                obj.E_current(:,:,i) = final;
+            end      
             
         end
-    end
-    
-    methods(Static)
-        function [out] = Propagate(E, z, k)
+        
+        function [save, final] = PropagateField(obj, E, z, k)
             % note: designed for single frequency input, vectorized z input
-            [A, kx, ky] = FourierEtoA(E, dx, dy);
-            out = FourierAtoE(A, z, kx, ky, k);
+            [A, kx, ky] = obj.FourierEtoA(E);
+            save = FourierAtoE(A, z, kx, ky, k);
+            final = save(:,:,end);
         end
         
-        function [A, kx, ky] = FourierEtoA(E, dx, dy)
+        function [A, kx, ky] = FourierEtoA(obj, E)
         %FourierEtoA Convert an E-field [ E(x,y) ] to a vector potential A(kx, ky)
             %   Detailed explanation goes here
             % calculate vector potential
             % note the conjugate is taken here to account for phase convention
+            dx = obj.dx;
+            dy = obj.dy;
+            
             A = fft2(conj(E));
 
             dims = flip(size(E) - [1, 1]);
@@ -107,6 +147,16 @@ classdef Simulation
             kx = 2*pi*kx / (dims(2)*dx);
             ky = 2*pi*ky / (dims(1)*dy);
         end
+    end
+    
+    methods(Static)
+        function [k, lambda] = f_to_k_lambda(f)
+            c = 299792458000;
+            lambda = c/f;
+            k = 2*pi/lambda;
+        end
+        
+
         
         function [E] = FourierAtoE(A, z, kx, ky, k0)
         %FourierAtoE Summary of this function goes here
