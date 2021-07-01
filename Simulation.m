@@ -114,6 +114,14 @@ classdef Simulation < handle
             
         end
         
+        % takes the current E field and transforms it through a field
+        % defined by S21_field. This field is a function of x, y, frequency
+        function transform(obj, S21_field)
+            for i = 1:length(obj.frequencies)
+                obj.E_current(:,:,i) = obj.E_current(:,:,i) .* S21_field(:,:,i);
+            end    
+        end
+        
         function [save, final] = PropagateField(obj, E, z, k)
             % note: designed for single frequency input, vectorized z input
             [A, kx, ky] = obj.FourierEtoA(E);
