@@ -100,10 +100,16 @@ classdef Simulation < handle
         
         function propagate(obj, z)
             [ks, lambdas] = Simulation.f_to_k_lambda(obj.frequencies);
+            
+            % saved_num is the number of E_field slices saved previously
+            saved_num = size(obj.E_saved);
+            saved_num = saved_num(3);
+            new_num = length(z);
             for i = 1:length(obj.frequencies)
                 k = ks(i);
                 [save, final] = obj.PropagateField(obj.E_current, z, k);
                 obj.E_current(:,:,i) = final;
+                obj.E_saved(:,:,(saved_num+1) : (saved_num+new_num), i) = save;
             end      
             
         end
