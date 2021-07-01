@@ -1,4 +1,4 @@
-%load('matlab_results.mat');
+load('matlab_results.mat');
 
 f0 = f;
 
@@ -51,7 +51,7 @@ mag = abs(sgrid);
 
 %plot(phase(84,:));
 
-TestLensHornReal(lensmodel, f0);
+%TestLensHornReal(lensmodel, f0);
 
 
 
