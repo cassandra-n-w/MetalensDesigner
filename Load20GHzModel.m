@@ -1,5 +1,5 @@
 load('matlab_results.mat');
-
+clear max;
 f0 = f;
 
 freqs = linspace(f*0.9, f*1.1, 30);

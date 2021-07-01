@@ -1,4 +1,4 @@
-classdef Horn
+classdef HornClass
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -14,7 +14,7 @@ classdef Horn
     end
     
     methods
-        function obj = Horn(a1, b1, p, a, b)
+        function obj = HornClass(a1, b1, p, a, b)
             %UNTITLED2 Construct an instance of this class
             %   Detailed explanation goes here
             obj.a1 = a1;
@@ -25,7 +25,9 @@ classdef Horn
             
         end
         
-        function out = EField(k, x, y)
+        function out = EField(obj, x, y, f)
+            [k, lambda] = Simulation.f_to_k_lambda(f);
+                       
             rho1 = obj.p * obj.b1 / (obj.b1 - obj.b);
             rho2 = obj.p * obj.a1 / (obj.a1 - obj.a);
     

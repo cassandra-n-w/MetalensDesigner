@@ -29,7 +29,8 @@ classdef Simulation < handle
             diam = lens_model.diameter;
             
             % set up an x-y grid with the center at 0,0
-            dims = diam*4 / (obj.dx);
+            dims(1) = round(diam*4 / (obj.dx));
+            dims(2) = round(diam*4 / (obj.dy));
             obj.dims = dims;
             
             xbounds = [-(dims(1)-1)/2, (dims(1)-1)/2];
@@ -37,18 +38,16 @@ classdef Simulation < handle
 
             [x, y] = meshgrid(linspace(xbounds(1), xbounds(2), dims(1)), linspace(ybounds(1), ybounds(2), dims(2)));
 
-            obj.x = x * dx;
-            obj.y = y * dy;
+            obj.x = x * obj.dx;
+            obj.y = y * obj.dy;
 
-            obj.E_current = zeros(obj.dims(1), obj.dims(2), obj.frequency);
+            obj.E_current = zeros(obj.dims(1), obj.dims(2), length(obj.frequency));
         end
         
         function phasepattern = calc_ideal_phase(obj)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             quicksim = Simulation(obj.lens_model, obj.designfrequency, obj.designfrequency);
-            
-            quicksim.setup();
             
             w0 = quicksim.calc_waist();
             gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
@@ -60,8 +59,9 @@ classdef Simulation < handle
             
             quicksim.propagate(obj.lens_model.focal_length);
             E = quicksim.E_current;
+            theta = angle(E);
             
-            phasepattern = mag .* ang(E);
+            phasepattern = mag .*exp(-1i*theta);
         end
         
         function phasepattern = calc_gaussian_phase(obj)
@@ -77,35 +77,45 @@ classdef Simulation < handle
 
             Rz = zf * (1 + (zr/zf)^2); %beam radius of curvature at focal distance
 
-            phasetrans = exp(-1.0i * pi * r.^2 / (lambda * Rz));
+            phasetrans = exp(+1.0i * pi * r.^2 / (lambda * Rz));
             phasepattern = mag .* phasetrans;
         end
         
         function waist = calc_waist(obj)
             % approximate the desired far-field beam angle of the receiver
             % horn as z_focus / (2 * diameter of lens)
-            theta0 = obj.lens_model.focal_length / (2*obj.lens_model.diameter);
-            
-            waist = pi*theta0 / obj.designfrequency;
+            theta0 = (obj.lens_model.diameter) / (2*obj.lens_model.focal_length);
+            [k, lambda] = Simulation.f_to_k_lambda(obj.designfrequency);
+            waist =  lambda/(pi*theta0);
         end
         
         function initialize_E_field(obj, E_func)
             
-            for i = 1:length(obj.frequencies)
-                f = obj.frequencies(i);
-                obj.E_current(:,:,i) = E_func(obj.x, obj.y, f);
+            for i = 1:length(obj.frequency)
+                f = obj.frequency(i);
+                efield = E_func(obj.x, obj.y, f);
+                
+                % normalize e field to contain 1 power;
+                power = efield .* conj(efield);
+                totalpower = trapz(trapz(power));
+                
+                obj.E_current(:,:,i) = efield ./ totalpower;
             end         
             
         end
         
         function propagate(obj, z)
-            [ks, lambdas] = Simulation.f_to_k_lambda(obj.frequencies);
+            [ks, lambdas] = Simulation.f_to_k_lambda(obj.frequency);
             
             % saved_num is the number of E_field slices saved previously
             saved_num = size(obj.E_saved);
-            saved_num = saved_num(3);
+            if (length(saved_num) < 3)
+                saved_num = 1;
+            else
+                saved_num = saved_num(3);
+            end
             new_num = length(z);
-            for i = 1:length(obj.frequencies)
+            for i = 1:length(obj.frequency)
                 k = ks(i);
                 [save, final] = obj.PropagateField(obj.E_current, z, k);
                 obj.E_current(:,:,i) = final;
@@ -114,10 +124,30 @@ classdef Simulation < handle
             
         end
         
+        % single frequency!
+        function scan = receiver_scan(obj, receiver_func, xscan, yscan)
+            scan = zeros(length(xscan), length(yscan));
+            for i = 1:length(xscan)
+                for j = 1:length(yscan)
+                    x_offset = xscan(i);
+                    y_offset = yscan(j);
+                    
+                    scan(i,j) = obj.calculate_coupling(receiver_func(obj.x+x_offset, obj.y+y_offset, obj.designfrequency));
+                end
+            end
+        end
+        
+        %single frequency!
+        function coupling = calculate_coupling(obj, receiverfield)
+            integrand = obj.E_current .* (receiverfield);
+    
+            coupling = trapz(trapz(integrand));
+        end
+        
         % takes the current E field and transforms it through a field
         % defined by S21_field. This field is a function of x, y, frequency
         function transform(obj, S21_field)
-            for i = 1:length(obj.frequencies)
+            for i = 1:length(obj.frequency)
                 obj.E_current(:,:,i) = obj.E_current(:,:,i) .* S21_field(:,:,i);
             end    
         end
