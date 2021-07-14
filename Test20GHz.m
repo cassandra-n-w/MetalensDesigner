@@ -47,7 +47,7 @@ optimcirclescan = sim_test(optimtransf_circle, lensmodel, hornfunc, distance, sc
 maxpower = mag2db(max(abs(optimcirclescan)));
 maxpower = 0;
 
-gaussianscan_db = mag2db(abs(gaussianscan)) - maxpower - 0.6;
+gaussianscan_db = mag2db(abs(gaussianscan)) - maxpower;
 idealscan_db = mag2db(abs(idealscan)) - maxpower;
 optimsquarescan_db = mag2db(abs(optimsquarescan)) - maxpower;
 optimcirclescan_db = mag2db(abs(optimcirclescan)) - maxpower;
