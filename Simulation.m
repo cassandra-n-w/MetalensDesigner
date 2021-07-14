@@ -94,11 +94,7 @@ classdef Simulation < handle
             for i = 1:length(obj.frequency)
                 f = obj.frequency(i);
                 efield = E_func(obj.x, obj.y, f);
-                
-                % normalize e field to contain 1 power;
-                power = efield .* conj(efield);
-                totalpower = trapz(trapz(power));
-                
+
                 obj.E_current(:,:,i) = Simulation.normalize(efield);
             end         
             
@@ -139,7 +135,7 @@ classdef Simulation < handle
         
         %single frequency!
         function coupling = calculate_coupling(obj, receiverfield)
-            integrand = abs(obj.E_current .* (Simulation.normalize(receiverfield)));
+            integrand = (obj.E_current .* (Simulation.normalize(receiverfield)));
     
             coupling = trapz(trapz(integrand));
         end

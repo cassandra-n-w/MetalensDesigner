@@ -20,7 +20,7 @@ hornfunc(0,0,20e9);
 tempsim = Simulation(lensmodel, f0, f0);
 
 
-scanpos = (-40:tempsim.dy:40);
+scanpos = (-25*tempsim.dy:tempsim.dy:25*tempsim.dy);
 r = sqrt((tempsim.x).^2 + (tempsim.y).^2);
 mask = (r < (lensmodel.diameter/2));
 
@@ -40,7 +40,7 @@ optimtransf_circle = optimtransf_square .* mask;
 optimcirclescan = sim_test(optimtransf_circle, lensmodel, hornfunc, distance, scanpos-1.499, f0);
 
 maxpower = mag2db(max(abs(optimcirclescan)));
-%maxpower = 0;
+maxpower = 0;
 
 gaussianscan_db = mag2db(abs(gaussianscan)) - maxpower;
 idealscan_db = mag2db(abs(idealscan)) - maxpower;
