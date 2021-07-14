@@ -99,7 +99,7 @@ classdef Simulation < handle
                 power = efield .* conj(efield);
                 totalpower = trapz(trapz(power));
                 
-                obj.E_current(:,:,i) = efield ./ totalpower;
+                obj.E_current(:,:,i) = Simulation.normalize(efield);
             end         
             
         end
@@ -139,7 +139,7 @@ classdef Simulation < handle
         
         %single frequency!
         function coupling = calculate_coupling(obj, receiverfield)
-            integrand = obj.E_current .* (receiverfield);
+            integrand = abs(obj.E_current .* (Simulation.normalize(receiverfield)));
     
             coupling = trapz(trapz(integrand));
         end
@@ -200,7 +200,12 @@ classdef Simulation < handle
             k = 2*pi/lambda;
         end
         
-
+        function [normalized] = normalize(efield)
+             power = abs(efield .* conj(efield));
+             totalpower = trapz(trapz(power));
+                
+             normalized = efield ./ sqrt(totalpower);
+        end
         
         function [E] = FourierAtoE(A, z, kx, ky, k0)
         %FourierAtoE Summary of this function goes here
