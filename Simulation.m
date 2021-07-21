@@ -140,6 +140,10 @@ classdef Simulation < handle
             coupling = trapz(trapz(integrand));
         end
         
+        function power = calculate_power(obj)
+            power = Simulation.calc_power(obj.E_current);
+        end
+        
         % takes the current E field and transforms it through a field
         % defined by S21_field. This field is a function of x, y, frequency
         function transform(obj, S21_field)
@@ -194,6 +198,10 @@ classdef Simulation < handle
             c = 299792458000;
             lambda = c/f;
             k = 2*pi/lambda;
+        end
+        
+        function power = calc_power(efield)
+            power = abs(efield .* conj(efield));
         end
         
         function [normalized] = normalize(efield)
