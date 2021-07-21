@@ -27,11 +27,11 @@ classdef Simulation < handle
             obj.dx = lens_model.grid_dimension;
             obj.dy = lens_model.grid_dimension;
             diam = lens_model.diameter;
-
+            dim_mult = 4;
             
             % set up an x-y grid with the center at 0,0
-            dims(1) = round(diam*4 / (obj.dx));
-            dims(2) = round(diam*4 / (obj.dy));
+            dims(1) = round(diam*dim_mult / (obj.dx));
+            dims(2) = round(diam*dim_mult / (obj.dy));
             obj.dims = dims;
             
             xbounds = [-(dims(1)-1)/2, (dims(1)-1)/2];
@@ -143,6 +143,10 @@ classdef Simulation < handle
         
         function power = calculate_power(obj)
             power = Simulation.calc_power(obj.E_current);
+        end
+        
+        function power = calculate_power_masked(obj, mask)
+             power = Simulation.calc_power(obj.E_current .* mask);
         end
         
         % takes the current E field and transforms it through a field

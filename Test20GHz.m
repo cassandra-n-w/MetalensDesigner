@@ -23,6 +23,8 @@ tempsim = Simulation(lensmodel, f0, f0);
 scanpos = (-15*tempsim.dy:tempsim.dy:15*tempsim.dy);
 r = sqrt((tempsim.x).^2 + (tempsim.y).^2);
 mask = (r < (lensmodel.diameter/2));
+global smallmask;
+smallmask = r < tempsim.dy*15;
 
 % according to quasioptics by goldsmith, 7.4: Beam Radius, 
 % a tapered aperture (such as our horn) has best coupling to the gaussian
@@ -78,22 +80,28 @@ p(5).LineStyle = 'none';
 p(2).LineStyle = 'none';
 
 function [scancoupling, sim] = sim_test(lens_transformation, lensmodel, hornfunc, distance, scanpos, f0)
+    global smallmask;
+    powtest = [];
     sim = Simulation(lensmodel, f0, f0);
     
     sim.initialize_E_field(hornfunc);
-    sim.calculate_power
+    powtest = [powtest, sim.calculate_power];
+    powtest = [powtest, sim.calculate_power_masked(smallmask)];
     
-    sim.propagate(0);
-    sim.calculate_power
+    sim.propagate(0.1);
+    powtest = [powtest, sim.calculate_power];
 
     sim.propagate(distance);
-    sim.calculate_power
+    powtest = [powtest, sim.calculate_power];
     
     sim.transform(lens_transformation);
-    sim.calculate_power
+    powtest = [powtest, sim.calculate_power];
     
     sim.propagate(distance);
-    sim.calculate_power
+    powtest = [powtest, sim.calculate_power];
+    powtest = [powtest, sim.calculate_power_masked(smallmask)];
+    
+    pow2db(powtest)
     
     scancoupling = sim.receiver_scan(hornfunc, 0, scanpos);
 end
