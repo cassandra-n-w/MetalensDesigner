@@ -27,6 +27,7 @@ classdef Simulation < handle
             obj.dx = lens_model.grid_dimension;
             obj.dy = lens_model.grid_dimension;
             diam = lens_model.diameter;
+
             
             % set up an x-y grid with the center at 0,0
             dims(1) = round(diam*4 / (obj.dx));
@@ -201,7 +202,7 @@ classdef Simulation < handle
         end
         
         function power = calc_power(efield)
-            power = abs(efield .* conj(efield));
+            power = trapz(trapz(abs(efield .* conj(efield))));
         end
         
         function [normalized] = normalize(efield)

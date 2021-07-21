@@ -81,12 +81,19 @@ function [scancoupling, sim] = sim_test(lens_transformation, lensmodel, hornfunc
     sim = Simulation(lensmodel, f0, f0);
     
     sim.initialize_E_field(hornfunc);
+    sim.calculate_power
+    
+    sim.propagate(0);
+    sim.calculate_power
 
     sim.propagate(distance);
+    sim.calculate_power
     
     sim.transform(lens_transformation);
+    sim.calculate_power
     
     sim.propagate(distance);
+    sim.calculate_power
     
     scancoupling = sim.receiver_scan(hornfunc, 0, scanpos);
 end
