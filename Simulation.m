@@ -16,6 +16,7 @@ classdef Simulation < handle
         dims
         E_saved
         E_current
+        designidx
     end
     
     methods
@@ -26,10 +27,12 @@ classdef Simulation < handle
             obj.lens_model = lens_model;
             obj.frequency = frequencies;
             obj.designfrequency = designfrequency;
+            [d, ix] = min( abs( frequencies - designfrequency) );
+            obj.designidx = ix;
             obj.dx = lens_model.grid_dimension;
             obj.dy = lens_model.grid_dimension;
             diam = lens_model.diameter;
-            dim_mult = 4;
+            dim_mult = 1.5;
             
             % set up an x-y grid with the center at 0,0
             dims(1) = round(diam*dim_mult / (obj.dx));
@@ -119,7 +122,7 @@ classdef Simulation < handle
             new_num = length(z);
             for i = 1:length(obj.frequency)
                 k = ks(i);
-                [save, final] = obj.PropagateField(obj.E_current, z, k);
+                [save, final] = obj.PropagateField(obj.E_current(:,:,i), z, k);
                 obj.E_current(:,:,i) = final;
                 obj.E_saved(:,:,(saved_num+1) : (saved_num+new_num), i) = save;
             end      
@@ -206,8 +209,8 @@ classdef Simulation < handle
     methods(Static)
         function [k, lambda] = f_to_k_lambda(f)
             c = 299792458000;
-            lambda = c/f;
-            k = 2*pi/lambda;
+            lambda = c./f;
+            k = 2*pi./lambda;
         end
         
         function power = calc_power(efield)
