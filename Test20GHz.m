@@ -72,12 +72,22 @@ fitgauss = fit(height, powerlin, 'gauss1');
 height = height - fitgauss.b1;
 powerdB = powerdB - pow2db(fitgauss.a1) - 4.4;
 
-p = plot(scanpos, gaussianscan_db, scanpos, idealscan_db, scanpos, optimsquarescan_db, scanpos, optimcirclescan_db, height, powerdB, scanpos, ideal_coupling);
-legend("ideal gaussian lens", "experimental","optimized lens (square)", "optimized lens (circle)", "measured", "ideal coupling");
+% p = plot(scanpos, gaussianscan_db, scanpos, idealscan_db, scanpos, optimsquarescan_db, scanpos, optimcirclescan_db, height, powerdB, scanpos, ideal_coupling);
+% legend("ideal gaussian lens", "experimental","optimized lens (square)", "optimized lens (circle)", "measured", "ideal coupling");
+% 
+% p(5).Marker = 'o';
+% p(5).LineStyle = 'none';
+% p(2).LineStyle = 'none';
 
-p(5).Marker = 'o';
-p(5).LineStyle = 'none';
-p(2).LineStyle = 'none';
+p = plot(scanpos, gaussianscan_db, scanpos, optimcirclescan_db, height, powerdB, scanpos, ideal_coupling);
+title("Power Scan of Computer-Modeled Lenses vs. Real Measurements");
+xlabel("Distance from central axis of lens (mm)");
+ylabel("Power Coupling (dB)");
+
+legend("ideal gaussian lens", "optimized lens (circle)", "measured", "ideal gaussian coupling");
+p(3).Marker = 'o';
+p(3).LineStyle = 'none';
+%
 
 function [scancoupling, sim] = sim_test(lens_transformation, lensmodel, hornfunc, distance, scanpos, f0)
     global smallmask;

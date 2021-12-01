@@ -61,11 +61,19 @@ mag2 = abs(sgrid2);
 
 x = 1:length(phase(84,:));
 subplot(2,1,1);
-plot(x, phase(84,:), x, phase2(84,:));
-title("Phase")
+plot(x, phase(84,:) * 180/pi, x, phase2(84,:) * 180/pi);
+title("Phase Comparison for Inaccurate Permittivity")
+xlabel("Position in Lens (arbitrary units)");
+ylabel("Phase (degrees)");
+label1 = "$\epsilon_r = 3.0$";
+label2 = "$\epsilon_r = 2.7$";
+legend(label1, label2, "Interpreter", "latex");
 subplot(2,1,2);
 plot(x, mag2db(mag(84,:)), x, mag2db(mag2(84,:)));
-title("Insertion Loss");
+title("Insertion Loss Comparison for Inaccurate Permittivity");
+xlabel("Position in Lens (arbitrary units)");
+ylabel("Insertion loss (dB)");
+legend([label1 label2], "Interpreter", "latex");
 
 %TestLensHornReal(lensmodel, f0);
 
