@@ -26,3 +26,13 @@ ideal = sim.calc_ideal_phase();
 
 gaussapprox = sim.calc_gaussian_phase();
 
+
+imagesc(sim.xvec, sim.yvec, 180+angle(ideal)*180/pi);
+xlabel("X position (mm)");
+ylabel("Y position (mm)");
+colorbar;
+title("Phase pattern over lens surface (degrees)");
+xlim([-75, 75]);
+ylim([-75, 75]);
+
+
