@@ -11,6 +11,8 @@ classdef Simulation < handle
         dy
         x
         y
+        xvec
+        yvec
         dims
         E_saved
         E_current
@@ -41,6 +43,9 @@ classdef Simulation < handle
 
             obj.x = x * obj.dx;
             obj.y = y * obj.dy;
+            
+            obj.xvec = obj.x(1,:);
+            obj.yvec = obj.y(:,1);
 
             obj.E_current = zeros(obj.dims(1), obj.dims(2), length(obj.frequency));
         end
