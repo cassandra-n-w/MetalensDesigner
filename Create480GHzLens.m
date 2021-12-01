@@ -47,7 +47,11 @@ sim.transform(repmat(ideal,1,1,31));
 % propagate
 sim.propagate(focal_length);
 
-w0 = horn_waist;
+
+
+waists = sim.FitGauss();
+
+w0 = waists(sim.designidx);
 gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
 gaussfield = gaussfunc(sim.x, sim.y, f);
 coupling = sim.calculate_coupling(gaussfield);
