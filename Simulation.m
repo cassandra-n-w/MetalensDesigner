@@ -172,6 +172,17 @@ classdef Simulation < handle
             final = save(:,:,end);
         end
         
+        function [waist] = FitGauss(obj)
+            waist = zeros( 'like', obj.frequency);
+            for i = 1:length(obj.frequency)
+                E = obj.E_current(:,:,i);
+                middle = round(obj.dims(2)/2);
+                Efit = (abs(E(:,middle)));
+                gaussfit = fit(obj.xvec.', Efit, 'gauss1', 'StartPoint', [0.01, 0, 1.0]);
+                waist(i) = gaussfit.c1;
+            end
+        end
+        
         function [A, kx, ky] = FourierEtoA(obj, E)
         %FourierEtoA Convert an E-field [ E(x,y) ] to a vector potential A(kx, ky)
             %   Detailed explanation goes here
