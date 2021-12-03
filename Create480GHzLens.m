@@ -1,4 +1,5 @@
 f = 480e9; % 480GHz central frequency
+tracewidth = 0.003; %trace/space is 3 microns
 numfreqs=31;
 freqs = linspace(f*0.9, f*1.1, numfreqs);
 
@@ -55,4 +56,7 @@ w0 = waists(sim.designidx);
 gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
 gaussfield = gaussfunc(sim.x, sim.y, f);
 coupling = sim.calculate_coupling(gaussfield);
+
+optim = Optimizer(lensmodel, tracewidth, f);
+optim.Optim360();
 

@@ -1,4 +1,4 @@
-classdef Optimizer
+classdef Optimizer < handle
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -10,6 +10,7 @@ classdef Optimizer
         half_element_layers
         lb
         ub
+        TLlist
     end
     
     methods
@@ -22,6 +23,8 @@ classdef Optimizer
             obj.element_layers = length(lensmodel.layer_thicknesses) - 1;
             obj.half_element_layers = obj.element_layers/2;
             
+            obj.TLlist = TL.empty(0);
+            
             if (abs(round(obj.half_element_layers) - obj.half_element_layers) > 0.01)
                 warning('Warning: optimizer cannot currently handle an odd number of metallized layers');
             end
@@ -29,6 +32,7 @@ classdef Optimizer
             % determine upper and lower bound for element sizes. This
             % the more restrictive of the trace/space, or the limit to
             % which the elements are simulated.
+            proto = lensmodel.TL_prototype;
             
             lb = max(min(proto.Element.sizes), obj.tracewidth/obj.lensmodel.grid_dimension);
             ub = min(max(proto.Element.sizes), 1 - obj.tracewidth/obj.lensmodel.grid_dimension);
@@ -36,16 +40,30 @@ classdef Optimizer
             obj.ub = ub * ones([obj.half_element_layers, 1]);
         end
         
-        function TLout = OptimTL(obj, SparamGoal, guesslist)
+        function Optim360(obj)
+            % ONLY FOR SINGLE FREQUENCY OPTIMIZATION
+            ang = linspace(0,360,31);
+            
+            for i = 1:length(ang)
+                
+                
+                goal = exp(1.0i * ang(i)*pi/180);
+                
+                TLtemp = obj.OptimTL(goal, obj.GenGuesses());
+                obj.TLlist(i) = TLtemp;
+            end
+        end
+        
+        function TLout = OptimTL(obj, S21Goal, guesslist)
             sz = size(guesslist);
-            guessnum = sz(2);
+            guessnum = sz(1);
             TLbest = TL(guesslist(:,1), obj.lensmodel.layer_thicknesses, obj.lensmodel.TL_prototype);
             penbest = +inf;
             for i = 1:guessnum
                 
-                guess = guesslist(:,i);
+                guess = guesslist(i,:);
                 
-                TLtemp, pentemp = obj.OptimTLsingleguess(SparamGoal, guess);
+                [TLtemp, pentemp] = obj.OptimTLsingleguess(S21Goal, guess);
                 
                 if (pentemp < penbest)
                     penbest = pentemp;
@@ -54,17 +72,19 @@ classdef Optimizer
                 
             end
             
+            penbest
+            
             TLout = TLbest;
         end
         
-        function [TLout, pen] = OptimTLsingleguess(obj, SparamGoal, initial_guess)
+        function [TLout, pen] = OptimTLsingleguess(obj, S21Goal, initial_guess)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here      
             
                        
             layers = obj.lensmodel.layer_thicknesses;
             proto = obj.lensmodel.TL_prototype;
-            optfunc = @(x) PenaltyFunc(proto.Sparam(obj.optimfreqs, [x flip(x)], layers), SparamGoal);
+            optfunc = @(x) Optimizer.PenaltyFunc(proto.SParam(obj.optimfreqs, [x flip(x)], layers), S21Goal);
             options = optimset('display', 'off');
 
             x = fmincon(optfunc,initial_guess,[],[],[],[],obj.lb,obj.ub, [], options);
@@ -74,19 +94,25 @@ classdef Optimizer
         end
 
        
+        function guesses = GenGuesses(obj)
+            guessarr = [.15, .4, .85];
+            
+            
+            guesses = [[.1 .1 .1 .1 .1] ; [.9 .9 .9 .9 .9] ; [.1 .9 .1 .9 .1]; [.9 .1 .9 .1 .9]];
+        end
     end
     
     methods(Static)
-        function pen = PenaltyFunc(SparamIn, SparamDesired)
-            S21 = SparamIn.Parameters(2,1,:);
-            S21desired = SparamDesired.Parameters(2,1,:);
+        function pen = PenaltyFunc(SparamIn, S21Desired)
+            S21 = SparamIn(2,1,:);
             
-            phasepenalty = cos(angle(S21) - angle(S21desired));
+            phasepenalty = cos(angle(S21) - angle(S21Desired));
             
             totalpenalty = -abs(S21) .* phasepenalty;
             
-            pen = sum(totalpenalty);
+            pen = mean(totalpenalty);
         end
+        
     end
 end
 
