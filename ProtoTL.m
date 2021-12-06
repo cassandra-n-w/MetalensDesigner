@@ -42,6 +42,12 @@ classdef ProtoTL < handle
             
             out = abcd2s(prod, Z0);
         end
+        
+        function out = SParamTL(obj, frequencies, TL)
+            
+            out = obj.SParam(frequencies, TL.sizes, TL.thicknesses);
+            
+        end
     end
 end
 
