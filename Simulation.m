@@ -176,6 +176,14 @@ classdef Simulation < handle
             end    
         end
         
+        function lensTransform(obj)
+            
+            %obj.lens_model.CalcSParam(obj.frequency);
+            S = obj.lens_model.PadMultiFreq(zeros(obj.dims), obj.frequency);
+            
+            obj.transform(S);
+        end
+        
         function [save, final] = PropagateField(obj, E, z, k)
             % note: designed for single frequency input, vectorized z input
             [A, kx, ky] = obj.FourierEtoA(E);

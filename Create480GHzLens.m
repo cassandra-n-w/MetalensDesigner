@@ -1,7 +1,7 @@
 f = 480e9; % 480GHz central frequency
 tracewidth = 0.003; %trace/space is 3 microns
 numfreqs=31;
-freqs = linspace(f*0.9, f*1.1, numfreqs);
+freqs = linspace(f*0.95, f*1.05, numfreqs);
 
 el = Element('C:\\Users\\Cassie\\My Drive\\Dropbox\\Documents\\My Work\\Research\\metamaterial_lens\\code\\HFSS Models\\Polyimide 3_4 g0p2 v99 touchstone');
 di = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015

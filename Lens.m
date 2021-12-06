@@ -39,19 +39,33 @@ classdef Lens < handle
             obj.S_array = zeros(sz_array(1), sz_array(2), numel(frequency));
             obj.sim_frequency = frequency;
             
-            for i = 1:sz_array(1)
-                for j = 1:sz_array(2)
+            proto = obj.TL_prototype;
+            Sout = zeros( [sz_array(1) sz_array(2) length(frequency)]);
+            
+            imax = sz_array(1);
+            jmax = sz_array(2);
+            for i = 1:imax
+                i
+                for j = 1:jmax
                     thisTL = obj.TL_array(i,j);
                     
-                    S = obj.TL_prototype.SParam(frequency, thisTL.sizes, thisTL.thicknesses);
+                    S = proto.SParam(frequency, thisTL.sizes, thisTL.thicknesses);
                     
-                    obj.S_array(i,j,:) = S(2,1,:);
+                    Sout(i,j,:) = S(2,1,:);
                 end
             end
-            
+            obj.S_array = Sout;
             out = obj.S_array;
         end
         
+        function out = PadMultiFreq(obj, pad, frequencies)
+            sz = size(pad);
+            out = zeros([sz(1), sz(2), length(frequencies)]); 
+            
+            for i = 1:length(frequencies)
+                out(:,:,i) = obj.PadSParams(pad, frequencies(i));
+            end
+        end
         
         function out = PadSParams(obj, pad, frequency)
             %PadSParams This method inserts the s-parameters of this lens
@@ -69,7 +83,7 @@ classdef Lens < handle
             end
             
             szpad = size(pad);
-            szsim = size(obj.S_array);
+            szsim = size(s_param);
 %             
 %             maxlim = ceil(szpad/2 + szsim/2);
 %             minlim = ceil(1 + szpad/2 - szsim/2);
