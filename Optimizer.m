@@ -166,12 +166,14 @@ classdef Optimizer < handle
         
         function pen = PenaltyFuncVec(SparamIn, S21Desired)
             S21 = shiftdim(SparamIn(2,1,:,:),2);
+            sz = size(S21);
+            S21Desired = repmat(S21Desired, 1, sz(2));
             
             phasepenalty = cos(angle(S21) - angle(S21Desired));
             
             totalpenalty = -abs(S21) .* phasepenalty;
             
-            pen = mean(totalpenalty);
+            pen = mean(totalpenalty, 1);
         end
         
     end
