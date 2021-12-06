@@ -49,7 +49,6 @@ sim.transform(repmat(ideal,1,1,31));
 sim.propagate(focal_length);
 
 
-
 waists = sim.FitGauss();
 
 w0 = waists(sim.designidx);
@@ -59,4 +58,6 @@ coupling = sim.calculate_coupling(gaussfield);
 
 optim = Optimizer(lensmodel, tracewidth, f);
 optim.Optim360();
+optim.CreateGoalSparam();
+optim.AssignOptimalTLs();
 

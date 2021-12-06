@@ -17,6 +17,9 @@ classdef Simulation < handle
         E_saved
         E_current
         designidx
+        lensdims
+        lensbounds_small
+        lensbounds_big
     end
     
     methods
@@ -37,10 +40,18 @@ classdef Simulation < handle
             % set up an x-y grid with the center at 0,0
             dims(1) = round(diam*dim_mult / (obj.dx));
             dims(2) = round(diam*dim_mult / (obj.dy));
+            
+            obj.lensdims(1) = round(diam/obj.dx);
+            obj.lensdims(2) = round(diam/obj.dy);
+            
             obj.dims = dims;
             
             xbounds = [-(dims(1)-1)/2, (dims(1)-1)/2];
             ybounds = [-(dims(2)-1)/2, (dims(2)-1)/2];
+            
+            
+            obj.lensbounds_small = round((obj.dims - obj.lensdims) / 2) + 1;
+            obj.lensbounds_big = obj.lensbounds_small + obj.lensdims - 1;
 
             [x, y] = meshgrid(linspace(xbounds(1), xbounds(2), dims(1)), linspace(ybounds(1), ybounds(2), dims(2)));
 
@@ -215,6 +226,13 @@ classdef Simulation < handle
             kx = 2*pi*kx / (dims(2)*dx);
             ky = 2*pi*ky / (dims(1)*dy);
         end
+        
+        
+        function [E] = Unpad(obj, Ein)
+            
+            E = Ein(obj.lensbounds_small(1):obj.lensbounds_big(1), obj.lensbounds_small(2):obj.lensbounds_big(2),:);
+            
+        end
     end
     
     methods(Static)
@@ -246,6 +264,7 @@ classdef Simulation < handle
             % note the conjugate is taken to take into account phase convention
             E = conj(ifft2(Az));
         end
+        
     end
 end
 

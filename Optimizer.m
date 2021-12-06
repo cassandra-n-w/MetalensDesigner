@@ -11,6 +11,8 @@ classdef Optimizer < handle
         lb
         ub
         TLlist
+        goalSparam
+        Sparamlist
     end
     
     methods
@@ -23,7 +25,12 @@ classdef Optimizer < handle
             obj.element_layers = length(lensmodel.layer_thicknesses) - 1;
             obj.half_element_layers = obj.element_layers/2;
             
+            sim = Simulation(lensmodel, freqs, freqs);
+            
             obj.TLlist = TL.empty(0);
+            
+            obj.goalSparam = zeros([sim.lensdims(1) sim.lensdims(2) length(freqs)]);
+            obj.Sparamlist = zeros([2 2 length(freqs)]);
             
             if (abs(round(obj.half_element_layers) - obj.half_element_layers) > 0.01)
                 warning('Warning: optimizer cannot currently handle an odd number of metallized layers');
@@ -52,6 +59,50 @@ classdef Optimizer < handle
                 TLtemp = obj.OptimTL(goal, obj.GenGuesses());
                 obj.TLlist(i) = TLtemp;
             end
+            
+            obj.CalcTLSparams();
+        end
+        
+        function CalcTLSparams(obj)
+            obj.Sparamlist = zeros([2 2 length(obj.optimfreqs) length(obj.TLlist)]);
+            for i = 1:length(obj.TLlist)
+                obj.Sparamlist(:,:,:,i) = obj.lensmodel.TL_prototype.SParamTL(obj.optimfreqs, obj.TLlist(i));
+            end
+        end
+        
+        function CreateGoalSparam(obj)
+            
+            sim = Simulation(obj.lensmodel, obj.optimfreqs, obj.optimfreqs);
+            
+            Epadded = sim.calc_ideal_phase();
+            
+            obj.goalSparam = sim.Unpad(Epadded);
+
+        end
+
+        function AssignOptimalTLs(obj)
+            
+            sz = size(obj.goalSparam);
+            
+            for i = 1:sz(1)
+                for j = 1:sz(2)
+                    TL = obj.TLlist(1);
+                    bestpen = +inf;
+                    for k = 1:length(obj.TLlist)
+                        
+                        pen = Optimizer.PenaltyFunc( obj.Sparamlist(:,:,:,k) , obj.goalSparam(i,j,:));
+                        
+                        if pen < bestpen
+                            bestpen = pen;
+                            TL = obj.TLlist(k);
+                        end
+                    end
+                    
+                    obj.lensmodel.TL_array(i,j) = TL;
+                end
+            end
+                    
+            
         end
         
         function TLout = OptimTL(obj, S21Goal, guesslist)
@@ -105,6 +156,16 @@ classdef Optimizer < handle
     methods(Static)
         function pen = PenaltyFunc(SparamIn, S21Desired)
             S21 = SparamIn(2,1,:);
+            
+            phasepenalty = cos(angle(S21) - angle(S21Desired));
+            
+            totalpenalty = -abs(S21) .* phasepenalty;
+            
+            pen = mean(totalpenalty);
+        end
+        
+        function pen = PenaltyFuncVec(SparamIn, S21Desired)
+            S21 = shiftdim(SparamIn(2,1,:,:),2);
             
             phasepenalty = cos(angle(S21) - angle(S21Desired));
             
