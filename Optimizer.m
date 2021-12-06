@@ -79,30 +79,21 @@ classdef Optimizer < handle
             obj.goalSparam = sim.Unpad(Epadded);
 
         end
-
+        
         function AssignOptimalTLs(obj)
             
             sz = size(obj.goalSparam);
             
             for i = 1:sz(1)
                 for j = 1:sz(2)
-                    TL = obj.TLlist(1);
-                    bestpen = +inf;
-                    for k = 1:length(obj.TLlist)
-                        
-                        pen = Optimizer.PenaltyFunc( obj.Sparamlist(:,:,:,k) , obj.goalSparam(i,j,:));
-                        
-                        if pen < bestpen
-                            bestpen = pen;
-                            TL = obj.TLlist(k);
-                        end
-                    end
+                    pen = Optimizer.PenaltyFuncVec( obj.Sparamlist , obj.goalSparam(i,j,:));
                     
-                    obj.lensmodel.TL_array(i,j) = TL;
+                    [d, idx] = min(pen);
+                    
+                    obj.lensmodel.TL_array(i,j) = obj.TLlist(idx);
                 end
             end
-                    
-            
+                      
         end
         
         function TLout = OptimTL(obj, S21Goal, guesslist)
