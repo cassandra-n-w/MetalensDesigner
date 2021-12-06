@@ -10,6 +10,7 @@ efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (lensmodel.diameter/2)) * exp(0);
 % initialize incoming plane wave
 sim.initialize_E_field(efield);
 
+lensmodel.CalcSParam(freqs);
 % transform through ideal lens pattern
 sim.lensTransform();
 
