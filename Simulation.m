@@ -67,21 +67,24 @@ classdef Simulation < handle
         function phasepattern = calc_ideal_phase(obj)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-            quicksim = Simulation(obj.lens_model, obj.designfrequency, obj.designfrequency);
             
-            w0 = quicksim.calc_waist();
-            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
-            
-            quicksim.initialize_E_field(gaussfunc);
-            
-            r = sqrt(obj.x.^2 + obj.y.^2);
-            mag = r < (obj.lens_model.diameter/2);
-            
-            quicksim.propagate(obj.lens_model.focal_length);
-            E = quicksim.E_current;
-            theta = angle(E);
-            
-            phasepattern = mag .*exp(-1i*theta);
+            %for i = 1:length(obj.frequency)
+                quicksim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+
+                w0 = quicksim.calc_waist();
+                gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
+
+                quicksim.initialize_E_field(gaussfunc);
+
+                r = sqrt(obj.x.^2 + obj.y.^2);
+                mag = r < (obj.lens_model.diameter/2);
+
+                quicksim.propagate(obj.lens_model.focal_length);
+                E = quicksim.E_current;
+                theta = angle(E);
+
+                phasepattern(:,:,:) = mag .*exp(-1i*theta);
+            %end
         end
         
         function phasepattern = calc_gaussian_phase(obj)
@@ -239,6 +242,44 @@ classdef Simulation < handle
         function [E] = Unpad(obj, Ein)
             
             E = Ein(obj.lensbounds_small(1):obj.lensbounds_big(1), obj.lensbounds_small(2):obj.lensbounds_big(2),:);
+            
+        end
+        
+        function [strehl] = StrehlRatio(obj)
+            
+            ideallens = obj.calc_ideal_phase();
+            actuallens = obj.lens_model.PadMultiFreq(zeros(obj.dims), obj.frequency);
+            
+
+            efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (obj.lens_model.diameter/2)) * exp(0);
+            sim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+            
+            % initialize incoming plane wave
+            sim.initialize_E_field(efield);
+
+            % transform through ideal lens pattern
+            sim.transform(ideallens);
+
+            % propagate
+            sim.propagate(obj.lens_model.focal_length);
+            
+            idealfocus = sim.E_current;
+            
+            % initialize incoming plane wave
+            sim.initialize_E_field(efield);
+
+            % transform through ideal lens pattern
+            sim.transform(actuallens);
+
+            % propagate
+            sim.propagate(obj.lens_model.focal_length);
+            
+            actualfocus = sim.E_current;
+
+            idealpeak = max(abs(idealfocus), [], [1 2]);
+            actualpeak = max(abs(actualfocus), [], [1 2]);
+            
+            strehl = (actualpeak./idealpeak).^2;
             
         end
     end

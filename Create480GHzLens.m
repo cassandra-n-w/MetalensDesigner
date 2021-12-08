@@ -24,6 +24,7 @@ sim = Simulation(lensmodel, freqs, f);
 horn_waist = sim.calc_waist();
 
 ideal = sim.calc_ideal_phase();
+ideal = ideal(:,:,sim.designidx);
 
 gaussapprox = sim.calc_gaussian_phase();
 

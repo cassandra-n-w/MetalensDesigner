@@ -1,22 +1,27 @@
 % designed to be run AFTER Create480GHzLens.m
 
-freqs = linspace(f*0.97, f*1.03, 3);
+freqs = linspace(f*0.97, f*1.03, 7);
 
-sim = Simulation(lensmodel, freqs, f);
+resim = false;
+if (resim)
+    sim = Simulation(lensmodel, freqs, f);
 
-% calculate the gaussian coupling of the lens
+    % calculate the gaussian coupling of the lens
 
-efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (lensmodel.diameter/2)) * exp(0);
-% initialize incoming plane wave
-sim.initialize_E_field(efield);
+    efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (lensmodel.diameter/2)) * exp(0);
+    % initialize incoming plane wave
+    sim.initialize_E_field(efield);
 
-lensmodel.CalcSParam(freqs);
-% transform through ideal lens pattern
-sim.lensTransform();
+    lensmodel.CalcSParam(freqs);
+    % transform through ideal lens pattern
+    sim.lensTransform();
 
-% propagate
-sim.propagate(focal_length);
+    % propagate
+    sim.propagate(focal_length);
+end
 
+
+strehl_ratio = sim.StrehlRatio();
 
 waists = sim.FitGauss();
 
