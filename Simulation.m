@@ -68,23 +68,23 @@ classdef Simulation < handle
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             
-            %for i = 1:length(obj.frequency)
-                quicksim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
 
-                w0 = quicksim.calc_waist();
-                gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
+            quicksim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
 
-                quicksim.initialize_E_field(gaussfunc);
+            w0 = quicksim.calc_waist();
+            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
 
-                r = sqrt(obj.x.^2 + obj.y.^2);
-                mag = r < (obj.lens_model.diameter/2);
+            quicksim.initialize_E_field(gaussfunc);
 
-                quicksim.propagate(obj.lens_model.focal_length);
-                E = quicksim.E_current;
-                theta = angle(E);
+            r = sqrt(obj.x.^2 + obj.y.^2);
+            mag = r < (obj.lens_model.diameter/2);
 
-                phasepattern(:,:,:) = mag .*exp(-1i*theta);
-            %end
+            quicksim.propagate(obj.lens_model.focal_length);
+            E = quicksim.E_current;
+            theta = angle(E);
+
+            phasepattern = mag .*exp(-1i*theta);
+
         end
         
         function phasepattern = calc_gaussian_phase(obj)
