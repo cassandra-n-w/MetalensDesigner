@@ -189,9 +189,24 @@ classdef Simulation < handle
         
         function [save, final] = PropagateField(obj, E, z, k)
             % note: designed for single frequency input, vectorized z input
+            
+            %final = zeros([size(E) size(z)]);
+            
+%             if (length(z) > 5)
+%                 ztemp = z(6:end);
+%                 z = z(1:5);
+%                 
+%                 recur_answer = obj.PropagateField(E, ztemp, k);
+%                 save(:,:,6:end) = recur_answer;
+%                 
+%                 [A, kx, ky] = obj.FourierEtoA(E);
+%                 save(:,:,5) = FourierAtoE(A, z, kx, ky, k);
+%                 final = save;
+%             else
             [A, kx, ky] = obj.FourierEtoA(E);
             save = FourierAtoE(A, z, kx, ky, k);
             final = save(:,:,end);
+
         end
         
         function [waist] = FitGauss(obj)
