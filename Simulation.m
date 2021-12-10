@@ -324,7 +324,7 @@ classdef Simulation < handle
             actualpeak = max(abs(actualfocus), [], [1 2]);
             
             strehl = (actualpeak./idealpeak).^2;
-            
+            strehl = squeeze(strehl);
         end
     end
     
