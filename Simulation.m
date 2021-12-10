@@ -143,6 +143,35 @@ classdef Simulation < handle
             
         end
         
+        % breaks down loss into reflection, dielectric, and optical
+        function [reflect, dielectric, optical] = CalcLoss(obj)
+            
+
+            S11 = obj.lens_model.PadGeneral(obj.lens_model.S11_array, zeros(obj.dims), obj.frequency);
+            S21 = obj.lens_model.PadMultiFreq(zeros(obj.dims), obj.frequency);
+
+            efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (obj.lens_model.diameter/2)) * exp(0);
+            sim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+            
+            % initialize incoming plane wave
+            sim.initialize_E_field(efield);
+
+            % transform through reflection of lens
+            sim.transform(S11);
+            
+            reflect = squeeze(1 - sim.calculate_power());
+            sim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+            sim.initialize_E_field(efield);
+            sim.transform(S21);
+            
+            dielectric = squeeze(sim.calculate_power()) ./ reflect;
+            
+            optical = squeeze(sim.StrehlRatio());
+            
+            optical = optical ./ (dielectric .* reflect);
+            
+        end
+        
         % single frequency!
         function scan = receiver_scan(obj, receiver_func, xscan, yscan)
             scan = zeros(length(xscan), length(yscan));

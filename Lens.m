@@ -15,6 +15,7 @@ classdef Lens < handle
         TL_array
         
         S_array
+        S11_array
     end
     
     methods
@@ -37,10 +38,12 @@ classdef Lens < handle
             sz_array = size(obj.TL_array);
             
             obj.S_array = zeros(sz_array(1), sz_array(2), numel(frequency));
+            obj.S11_array = zeros(sz_array(1), sz_array(2), numel(frequency));
             obj.sim_frequency = frequency;
             
             proto = obj.TL_prototype;
             Sout = zeros( [sz_array(1) sz_array(2) length(frequency)]);
+            S11out = zeros( [sz_array(1) sz_array(2) length(frequency)]);
             
             imax = sz_array(1);
             jmax = sz_array(2);
@@ -52,9 +55,11 @@ classdef Lens < handle
                     S = proto.SParam(frequency, thisTL.sizes, thisTL.thicknesses);
                     
                     Sout(i,j,:) = S(2,1,:);
+                    S11out(i,j,:) = S(1,1,:);
                 end
             end
             obj.S_array = Sout;
+            obj.S11_array = S11out;
             out = obj.S_array;
         end
         
@@ -64,6 +69,40 @@ classdef Lens < handle
             
             for i = 1:length(frequencies)
                 out(:,:,i) = obj.PadSParams(pad, frequencies(i));
+            end
+        end
+        
+        function out = PadGeneral(obj, input, pad, frequencies)
+            sz = size(pad);
+            out = zeros([sz(1), sz(2), length(frequencies)]); 
+            
+            for i = 1:length(frequencies)
+%                 idx = find(obj.sim_frequency == frequencies(i), 1);
+%             
+%                 if numel(idx) > 0
+%                     s_param = input(:,:,idx);
+%                 else
+%                     obj.CalcSParam(frequency);
+%                     s_param = input(:,:,1);
+%                 end
+                s_param = input(:,:,i);
+
+                szpad = size(pad);
+                szsim = size(s_param);
+    %             
+    %             maxlim = ceil(szpad/2 + szsim/2);
+    %             minlim = ceil(1 + szpad/2 - szsim/2);
+    %             
+    %             pad(minlim(1):maxlim(1), minlim(2):maxlim(2)) = s_param;
+
+                padamount = ceil((szpad - szsim)/2);
+
+                temp = padarray(s_param, padamount, 0);
+                sztemp = size(temp);
+
+                szerror = sztemp - szpad;
+
+                out(:,:,i) = temp(1:end - szerror(1), 1:end - szerror(2));
             end
         end
         

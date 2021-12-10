@@ -49,7 +49,7 @@ classdef Optimizer < handle
         
         function Optim360(obj)
             % ONLY FOR SINGLE FREQUENCY OPTIMIZATION
-            ang = linspace(0,360,31);
+            ang = linspace(0,360,61);
             
             for i = 1:length(ang)
                 
