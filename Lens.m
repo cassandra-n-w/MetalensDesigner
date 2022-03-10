@@ -36,12 +36,12 @@ classdef Lens < handle
         
         function gerberfy(obj)
             
-            obj.dcode = 10;
+            
             
             t = datetime;
             t.Format = 'yyyy-MM-dd''T''HHmm';
             str = string(t);
-            g = obj.grid_dimension;
+            g = obj.grid_dimension
             mkdir('gerber' , str);
             
             %folder = strcat('gerber\', str, '\');
@@ -55,9 +55,10 @@ classdef Lens < handle
             xstart = -(extentx - 1)*g/2;
             ystart = -(extenty - 1)*g/2;
             
-            for i = 1:length(obj.layer_thicknesses)
+            for i = 1:length(obj.layer_thicknesses - 1)
                 filename = fullfile('gerber', str, strcat(prefix, num2str(i), '.gbr'));
                 gerberfile = fopen(filename, 'w');
+                obj.dcode = 10;
 
                 % set decimal format
                 fprintf(gerberfile, '%%FSLAX36Y36*%%\n');
@@ -67,15 +68,17 @@ classdef Lens < handle
 
                 for j = 1:extentx
                     x = xstart+j*g;
-                    x
+                    if mod(j, 30) == 0
+                        x
+                    end
                     for k = 1:extenty
-                         y = ystart+j*g;
+                         y = ystart+k*g;
                          
                          TL = obj.TL_array(j, k);
-                         b = TL.sizes(i);
-                         
-                         obj.writeRect(x, y, b, b, gerberfile);
-                         
+                         b = TL.sizes(i)*g;
+                         if (x^2 + y^2 < (obj.diameter/2)^2)
+                             obj.writeRect(x, y, b, b, gerberfile);
+                         end
                     end
                 end
                 fprintf(gerberfile, 'M02*');
