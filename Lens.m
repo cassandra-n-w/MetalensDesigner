@@ -16,6 +16,7 @@ classdef Lens < handle
         
         S_array
         S11_array
+        dcode
     end
     
     methods
@@ -27,9 +28,73 @@ classdef Lens < handle
             obj.focal_length = focal;
             obj.grid_dimension = grid;
             obj.TL_prototype = proto;
+            obj.dcode = 10;
             
             obj.TL_array = TL.empty(0);
             %obj.TL_array(obj.index_dimension, obj.index_dimension) = TL();
+        end
+        
+        function gerberfy(obj)
+            
+            obj.dcode = 10;
+            
+            t = datetime;
+            t.Format = 'yyyy-MM-dd''T''HHmm';
+            str = string(t);
+            g = obj.grid_dimension;
+            mkdir('gerber' , str);
+            
+            %folder = strcat('gerber\', str, '\');
+            
+            prefix = '480GHz_layer';
+            
+            size_lens = size(obj.TL_array);
+            extentx = size_lens(1);
+            extenty = size_lens(2);
+            
+            xstart = -(extentx - 1)*g/2;
+            ystart = -(extenty - 1)*g/2;
+            
+            for i = 1:length(obj.layer_thicknesses)
+                filename = fullfile('gerber', str, strcat(prefix, num2str(i), '.gbr'));
+                gerberfile = fopen(filename, 'w');
+
+                % set decimal format
+                fprintf(gerberfile, '%%FSLAX36Y36*%%\n');
+
+                % set to mm measurements
+                fprintf(gerberfile, '%%MOMM*%%\n');
+
+                for j = 1:extentx
+                    x = xstart+j*g;
+                    x
+                    for k = 1:extenty
+                         y = ystart+j*g;
+                         
+                         TL = obj.TL_array(j, k);
+                         b = TL.sizes(i);
+                         
+                         obj.writeRect(x, y, b, b, gerberfile);
+                         
+                    end
+                end
+                fprintf(gerberfile, 'M02*');
+                fclose(gerberfile);
+            end
+            
+            
+        end
+        
+        function writeRect(obj, xpos, ypos, xsize, ysize, gerberfile)
+            % create aperture
+            dc = obj.dcode;
+            fprintf(gerberfile, '%%ADD%dR,%#.6fX%#.6f*%%\n', dc, xsize, ysize);
+            fprintf(gerberfile, 'D%d*\n', dc);
+            obj.dcode = dc + 1;
+
+            %flash aperture at each relevant location
+            fprintf(gerberfile, 'X%dY%dD03*\n', round(xpos*1e6), round(ypos*1e6));
+            
         end
         
         function out = CalcSParam(obj,frequency)

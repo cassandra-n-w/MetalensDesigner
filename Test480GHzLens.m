@@ -2,7 +2,7 @@
 
 freqs = linspace(f*0.97, f*1.03, 7);
 
-resim = false;
+resim = true;
 if (resim)
     sim = Simulation(lensmodel, freqs, f);
 
