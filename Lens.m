@@ -106,17 +106,17 @@ classdef Lens < handle
             fprintf(gerberfile, '1,0,9.5,0,0*\n');
 
             % second circle
-            fprintf(gerberfile, '1,1,6.5,0,0*\n');
+            fprintf(gerberfile, '1,1,6.6,0,0*\n');
             % second circle
             fprintf(gerberfile, '1,0,6.3,0,0*\n');
 
             % third circle
-            fprintf(gerberfile, '1,1,3.5,0,0*\n');
+            fprintf(gerberfile, '1,1,3.6,0,0*\n');
             % third circle
             fprintf(gerberfile, '1,0,3.4,0,0*\n');
 
             % inner circle
-            fprintf(gerberfile, '1,1,1.0,0,0*%%\n');
+            fprintf(gerberfile, '1,1,0.2,0,0*%%\n');
 
         end
 
