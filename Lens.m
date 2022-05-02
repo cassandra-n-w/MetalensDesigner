@@ -7,6 +7,7 @@ classdef Lens < handle
         ideal_phase
         
         diameter
+        struct_diam
         layer_thicknesses
         focal_length
         grid_dimension
@@ -20,10 +21,11 @@ classdef Lens < handle
     end
     
     methods
-        function obj = Lens(diameter, thickness, focal, grid, proto)
+        function obj = Lens(diameter, thickness, focal, grid, proto, struct_diam)
             %UNTITLED Construct an instance of this class
             %   Detailed explanation goes here
             obj.diameter = diameter;
+            obj.struct_diam = struct_diam;
             obj.layer_thicknesses = thickness;
             obj.focal_length = focal;
             obj.grid_dimension = grid;
@@ -55,7 +57,7 @@ classdef Lens < handle
             xstart = -(extentx - 1)*g/2;
             ystart = -(extenty - 1)*g/2;
             
-            for i = 1:length(obj.layer_thicknesses - 1)
+            for i = 1:(length(obj.layer_thicknesses) - 1)
                 filename = fullfile('gerber', str, strcat(prefix, num2str(i), '.gbr'));
                 gerberfile = fopen(filename, 'w');
                 obj.dcode = 10;
@@ -65,6 +67,10 @@ classdef Lens < handle
 
                 % set to mm measurements
                 fprintf(gerberfile, '%%MOMM*%%\n');
+
+                obj.writeDrillMacro(gerberfile);
+
+                obj.drillHoles(gerberfile, 24);
 
                 for j = 1:extentx
                     x = xstart+j*g;
@@ -86,6 +92,62 @@ classdef Lens < handle
             end
             
             
+        end
+
+        function writeAlignmentMacro(obj, gerberfile)
+            
+        end
+
+        function writeDrillMacro(obj, gerberfile)
+            fprintf(gerberfile, '%%AMHOLEMARKER*\n');
+            % outermost circle
+            fprintf(gerberfile, '1,1,10.0,0,0*\n');
+            % outermost circle
+            fprintf(gerberfile, '1,0,9.5,0,0*\n');
+
+            % second circle
+            fprintf(gerberfile, '1,1,6.5,0,0*\n');
+            % second circle
+            fprintf(gerberfile, '1,0,6.3,0,0*\n');
+
+            % third circle
+            fprintf(gerberfile, '1,1,3.5,0,0*\n');
+            % third circle
+            fprintf(gerberfile, '1,0,3.4,0,0*\n');
+
+            % inner circle
+            fprintf(gerberfile, '1,1,1.0,0,0*%%\n');
+
+        end
+
+        function drillHoles(obj, gerberfile, numholes)
+            r = (obj.struct_diam/2) - 5;
+            obj.createDrillAperture(gerberfile);
+            for i = 1:numholes
+                
+                ang = i/numholes * 2 * pi;
+            
+                x = sin(ang) * r;
+                y = cos(ang) * r;
+
+                obj.flashApp(x, y, gerberfile);             
+
+            end
+        
+        end
+
+        function createDrillAperture(obj, gerberfile)
+            % create aperture
+            dc = obj.dcode;
+            fprintf(gerberfile, '%%ADD%dHOLEMARKER*%%\n', dc);
+            fprintf(gerberfile, 'D%d*\n', dc);
+            obj.dcode = dc + 1;
+        end
+
+
+        function flashApp(obj, xpos, ypos, gerberfile)
+            %flash aperture at each relevant location
+            fprintf(gerberfile, 'X%dY%dD03*\n', round(xpos*1e6), round(ypos*1e6));
         end
         
         function writeRect(obj, xpos, ypos, xsize, ysize, gerberfile)

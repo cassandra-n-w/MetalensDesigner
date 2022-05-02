@@ -13,11 +13,13 @@ g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 
 layer_thickness = 0.010; %10 um layer thickness
 
-diameter = 150;
+% diameter of active lens area and structural lens area, respectively
+diameter = 128;
+struct_diam = 150;
 
 focal_length = 150;
 
-lensmodel = Lens(diameter, layer_thickness*ones(11, 1),  focal_length, g, proto);
+lensmodel = Lens(diameter, layer_thickness*ones(11, 1),  focal_length, g, proto, struct_diam);
 
 sim = Simulation(lensmodel, freqs, f);
 
