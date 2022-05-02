@@ -35,9 +35,9 @@ classdef ProtoTL < handle
             prod = di_abcd(:,:,:,1);
             
             for i = 1:szel(4)
-                for j = 1:length(frequencies)
-                    prod(:,:,j) = prod(:,:,j) * el_abcd(:,:,j,i) * di_abcd(:,:,j,i+1);
-                end
+                
+                prod = pagemtimes(pagemtimes(prod, el_abcd(:,:,:,i)), di_abcd(:,:,:,i+1));
+                
             end
             
             out = abcd2s(prod, Z0);
