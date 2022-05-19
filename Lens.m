@@ -43,7 +43,7 @@ classdef Lens < handle
             t = datetime;
             t.Format = 'yyyy-MM-dd''T''HHmm';
             str = string(t);
-            g = obj.grid_dimension
+            g = obj.grid_dimension;
             mkdir('gerber' , str);
             
             %folder = strcat('gerber\', str, '\');
@@ -71,6 +71,12 @@ classdef Lens < handle
                 obj.writeDrillMacro(gerberfile);
 
                 obj.drillHoles(gerberfile, 24);
+
+                obj.clearCircle(gerberfile,obj.diameter+2)
+
+                obj.writeCrosshairs(gerberfile, 0.1)
+
+                obj.clearCircle(gerberfile, obj.diameter+0.1)
 
                 for j = 1:extentx
                     x = xstart+j*g;
@@ -120,8 +126,15 @@ classdef Lens < handle
 
         end
 
+        function writeCrosshairs(obj, gerberfile, thickness)
+
+            obj.writeRect(0,0,thickness, obj.diameter + 4, gerberfile)
+            obj.writeRect(0,0,obj.diameter + 4, thickness, gerberfile)
+
+        end
+
         function drillHoles(obj, gerberfile, numholes)
-            r = (obj.struct_diam/2) - 5;
+            r = (obj.struct_diam/2) - 7;
             obj.createDrillAperture(gerberfile);
             for i = 1:numholes
                 
@@ -136,12 +149,39 @@ classdef Lens < handle
         
         end
 
+        function clearCircle(obj, gerberfile, diam)
+            
+             fprintf(gerberfile, '%%LPC*%%\n');
+
+             obj.writeCircle(0,0,diam,0,gerberfile)
+
+             fprintf(gerberfile, '%%LPD*%%\n');
+
+        end
+
         function createDrillAperture(obj, gerberfile)
             % create aperture
             dc = obj.dcode;
             fprintf(gerberfile, '%%ADD%dHOLEMARKER*%%\n', dc);
             fprintf(gerberfile, 'D%d*\n', dc);
             obj.dcode = dc + 1;
+        end
+
+        function writeCircle(obj, xpos, ypos, d_outer, d_inner, gerberfile)
+            % create aperture
+            dc = obj.dcode;
+            if d_inner > 0
+                fprintf(gerberfile, '%%ADD%dC,%#.6fX%#.6f*%%\n', dc, d_outer, d_inner);
+            else
+                fprintf(gerberfile, '%%ADD%dC,%#.6f*%%\n', dc, d_outer);
+            end
+
+            fprintf(gerberfile, 'D%d*\n', dc);
+            obj.dcode = dc + 1;
+
+            %flash aperture at each relevant location
+            fprintf(gerberfile, 'X%dY%dD03*\n', round(xpos*1e6), round(ypos*1e6));
+            
         end
 
 

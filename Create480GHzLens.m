@@ -14,7 +14,7 @@ g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 layer_thickness = 0.010; %10 um layer thickness
 
 % diameter of active lens area and structural lens area, respectively
-diameter = 128;
+diameter = 125;
 struct_diam = 150;
 
 focal_length = 150;
@@ -63,4 +63,9 @@ optim = Optimizer(lensmodel, tracewidth, f);
 optim.Optim360();
 optim.CreateGoalSparam();
 optim.AssignOptimalTLs();
+
+%% 
+
+lensmodel.gerberfy()
+
 
