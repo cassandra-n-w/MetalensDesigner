@@ -1,5 +1,5 @@
 f = 480e9; % 480GHz central frequency
-tracewidth = 0.003; %trace/space is 3 microns
+tracewidth = 0.005; %trace/space is 5 microns
 numfreqs=31;
 freqs = linspace(f*0.95, f*1.05, numfreqs);
 
