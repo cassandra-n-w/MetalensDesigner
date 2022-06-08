@@ -58,7 +58,7 @@ classdef Lens < handle
             ystart = -(extenty - 1)*g/2;
             
             for i = 1:(length(obj.layer_thicknesses) - 1)
-                filename = fullfile('gerber', str, strcat(prefix, num2str(i), '.gbr'));
+                filename = fullfile('gerber', str, strcat(prefix, num2str(i, "%03d"), '.gbr'));
                 gerberfile = fopen(filename, 'w');
                 obj.dcode = 10;
 
