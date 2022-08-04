@@ -72,7 +72,7 @@ classdef Lens < handle
 
                 obj.drillHoles(gerberfile, 24);
 
-                obj.clearCircle(gerberfile,obj.diameter+2)
+                obj.clearCircle(gerberfile,obj.struct_diam-20)
 
                 obj.writeCrosshairs(gerberfile, 0.1)
 

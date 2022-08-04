@@ -33,6 +33,9 @@ classdef Dielectric
             abcd_matrix = zeros(2,2,numel(freqs),numel(obj.unit));
             
             for i=1:numel(freqs)
+                % note: this is probably reliant on good dielectric
+                % approximation. can possibly be extended to include all
+                % mu = 1.0 materials
                 k = sqrt(epsr(i)) .* 2*pi*freqs(i)/c;
                 beta = k;
                 alpha = k .* tand / 2;
