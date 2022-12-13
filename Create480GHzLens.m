@@ -7,11 +7,15 @@ freqs = linspace(f*0.95, f*1.05, numfreqs);
 el = Element('C:\\Users\\Cassie\\OneDrive\\Drive\\Documents\\My Work\\Research\\metamaterial_lens\\code\\HFSS Models\\Polyimide 3_4 g0p2 v99 touchstone');
 di = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
 
+% elements with aluminum instead of copper
+el_al = Element('C:\\Users\\Cassie\\OneDrive\\Drive\\Documents\\My Work\\Research\\metamaterial_lens\\code\\HFSS Models\\Polyimide 3_4 Aluminum g0p2 v99 touchstone');
+
 % silicon nitride dielectric
 SiN = Dielectric(6.0 * ones(size(freqs)), 0.002, freqs, 150e-6, 450e-6);
 di2_thickness = 300e-6;
 
 proto = ProtoTL(el, di);
+proto_al = ProtoTL(el_al, di);
 
 %gridding size
 g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
