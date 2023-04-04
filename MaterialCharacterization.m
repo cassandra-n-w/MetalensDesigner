@@ -16,7 +16,7 @@ abcd_total = pagemtimes(pagemtimes( ...
 s_tot = abcd2s(abcd_total, Z0);
 
 s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
-subplot(2,2,1)
+subplot(1,3,1)
 load("HDPEtestdata.mat");
 plot(freqs/1e9, s11, f, mag_load);
 xlabel("Frequency (GHz)");
@@ -24,6 +24,7 @@ ylabel("S11 (dB)");
 ylim([min(s11)-5,0]);
 xlim([min(freqs/1e9), max(freqs/1e9)]);
 title("Polyimide core with glued HDPE");
+legend(["Model", "Measurement"])
 
 % glued polyimide and polypropylene
 % initial nominal:
@@ -34,21 +35,32 @@ title("Polyimide core with glued HDPE");
 % polyimide 147um
 % polypropylene 1.616mm
 abcd_total = pagemtimes(pagemtimes( ...
+             polypropylene.abcd_interp(freqs, 1.646), ...
+             polyimide.abcd_interp(freqs, 0.110)), ...
+             polypropylene.abcd_interp(freqs, 1.646));
+
+s_tot = abcd2s(abcd_total, Z0);
+
+s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
+
+abcd_total = pagemtimes(pagemtimes( ...
              polypropylene.abcd_interp(freqs, 1.616), ...
              polyimide.abcd_interp(freqs, 0.147)), ...
              polypropylene.abcd_interp(freqs, 1.616));
 
 s_tot = abcd2s(abcd_total, Z0);
 
-s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
-subplot(2,2,2)
+s11_2 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
+
+subplot(1,3,2)
 load("polypropylenetestdata.mat");
-plot(freqs/1e9, s11, f, mag_load);
+plot(freqs/1e9, s11, f, mag_load, freqs/1e9, s11_2);
 xlabel("Frequency (GHz)");
 ylabel("S11 (dB)");
 ylim([min(s11)-5,0]);
 xlim([min(freqs/1e9), max(freqs/1e9)]);
 title("Polyimide core with glued Polypropylene");
+legend(["Model (nominal)", "Measurement", "Model (best fit)"]);
 
 % glued polyimide and polyethylene
 abcd_total = pagemtimes(pagemtimes( ...
@@ -58,14 +70,14 @@ abcd_total = pagemtimes(pagemtimes( ...
 
 s_tot = abcd2s(abcd_total, Z0);
 
-s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
-subplot(2,2,3)
-plot(freqs/1e9, s11);
-xlabel("Frequency (GHz)");
-ylabel("S11 (dB)");
-ylim([min(s11)-5,0]);
-xlim([min(freqs/1e9), max(freqs/1e9)]);
-title("Polyimide core with glued Polyethylene (destroyed)");
+% s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
+% subplot(2,2,3)
+% plot(freqs/1e9, s11);
+% xlabel("Frequency (GHz)");
+% ylabel("S11 (dB)");
+% ylim([min(s11)-5,0]);
+% xlim([min(freqs/1e9), max(freqs/1e9)]);
+% title("Polyimide core with glued Polyethylene (destroyed)");
 
 % glued polyimide and polyethylene
 abcd_total = polyimide.abcd_interp(freqs, 0.010);
@@ -80,20 +92,20 @@ s_tot = abcd2s(abcd_total, Z0);
 
 s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
 
-abcd_total = polyimide.abcd_interp(freqs, 0.130);
+abcd_total = polyimide.abcd_interp(freqs, 0.240);
 
     
 
 s_tot = abcd2s(abcd_total, Z0);
 
 s11_2 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
-subplot(2,2,4)
+subplot(1,3,3)
 load("sintestdata.mat");
 plot(freqs/1e9, s11, f, mag_load, freqs/1e9, s11_2);
-legend(["Modeled as 110um nominal", "test data", "modeled as 130um"])
+legend(["Modeled as 110um (nominal)", "Measurement", "Modeled as 130um thick"])
 xlabel("Frequency (GHz)");
 ylabel("S11 (dB)");
-ylim([min(s11)-5,0]);
+ylim([min(s11_2)-5,0]);
 xlim([min(freqs/1e9), max(freqs/1e9)]);
 title("Polyimide core with Silicon Nitride interlayers");
 
