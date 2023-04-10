@@ -12,10 +12,10 @@ for j = 1:length(files)
     Measures(j) = Meas(folderpath, name);
 end
 
-Ycut = 4.05
-Xcut = 11.30
+Ycut = 4.05;
+Xcut = 11.30;
 
-freq = 480e9
+freq = 480e9;
 
 Ycut_Xs = [];
 Xcut_Ys = [];
@@ -37,15 +37,23 @@ for i = 1:length(Measures)
     end
 end
 
-Ycut_Xs = Ycut_Xs - 11.3
-Xcut_Ys = Xcut_Ys - 4.5
+hold off;
+Ycut_Xs = Ycut_Xs - 11.3;
+Xcut_Ys = Xcut_Ys - 4.5;
 plot(Ycut_Xs, Ycut_Db, ".", Xcut_Ys, Xcut_Db, ".")
-legend(["X cut", "Y cut"]);
+
 xlabel("Horn Position (mm)");
 ylabel("S21 (dB)");
 ylim([-60, 0])
 title("2f - 2f Horn Coupling Lens Test, 480GHz")
 
+hold on;
+if exist("xcut")
+    plot(xscan, mag2db(abs(xcut(:,:,4))), yscan, mag2db(abs(ycut(:,:,4))) - 2.8);
+    legend(["X cut", "Y cut", "Simulated", "Simulated - 2.8dB"]);
+else
+    legend(["X cut", "Y cut"]);
+end
 
 
 

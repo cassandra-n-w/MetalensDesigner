@@ -1,7 +1,7 @@
 f = 480e9; % 480GHz central frequency
 tracewidth = 0.005; %trace/space is 5 microns
 numfreqs=31;
-freqs = linspace(f*0.95, f*1.05, numfreqs);
+freqs = linspace(f*0.88, f*1.12, numfreqs);
 
 
 el = Element('C:\\Users\\Cassie\\OneDrive\\Drive\\Documents\\My Work\\Research\\metamaterial_lens\\code\\HFSS Models\\Polyimide 3_4 g0p2 v99 touchstone');
@@ -55,7 +55,7 @@ efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (lensmodel.diameter/2)) * exp(0);
 sim.initialize_E_field(efield);
 
 % transform through ideal lens pattern
-sim.transform(repmat(ideal,1,1,31));
+sim.transform(repmat(ideal,1,1,numfreqs));
 
 % propagate
 sim.propagate(focal_length);

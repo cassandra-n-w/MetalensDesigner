@@ -2,7 +2,7 @@
 
 % Temporary!!!
 % this is to test the effect of replacing copper with aluminum
-%lensmodel.TL_prototype = proto_al;
+lensmodel.TL_prototype = proto_al;
 
 freqs = linspace(f*0.97, f*1.03, 7);
 

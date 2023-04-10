@@ -174,13 +174,13 @@ classdef Simulation < handle
         
         % single frequency!
         function scan = receiver_scan(obj, receiver_func, xscan, yscan)
-            scan = zeros(length(xscan), length(yscan));
+            scan = zeros(length(xscan), length(yscan), length(obj.frequency));
             for i = 1:length(xscan)
                 for j = 1:length(yscan)
                     x_offset = xscan(i);
                     y_offset = yscan(j);
                     
-                    scan(i,j) = obj.calculate_coupling(receiver_func(obj.x+x_offset, obj.y+y_offset, obj.frequency));
+                    scan(i,j,:) = obj.calculate_coupling(receiver_func(obj.x+x_offset, obj.y+y_offset, obj.frequency));
                 end
             end
         end

@@ -10,7 +10,7 @@ classdef DiagonalHornClass
     end
     
     methods
-        function obj = HornClass(a, L)
+        function obj = DiagonalHornClass(a, L)
             %UNTITLED2 Construct an instance of this class
             %   Detailed explanation goes here
             obj.a = a;
@@ -27,9 +27,11 @@ classdef DiagonalHornClass
             x = (eta + xi)/sqrt(2);
             y = (eta - xi)/sqrt(2);
 
+            lambda = reshape(lambda, 1,1,[]);
+
             mask = (abs(x) <= obj.a) .* (abs(y) <= obj.a);
                        
-            k_del = (2*pi ./ lambda) * ((2* (obj.a).^2 - x.^2 - y.^2))/ (2*obj.L);
+            k_del = (2*pi ./ lambda) .* ((2* (obj.a).^2 - x.^2 - y.^2))/ (2*obj.L);
 
             E_eta_mag = 1/(sqrt(2)) * (cos(pi*y / (2*obj.a)) + cos(pi*x/(2*obj.a)));
 
