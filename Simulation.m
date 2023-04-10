@@ -180,7 +180,7 @@ classdef Simulation < handle
                     x_offset = xscan(i);
                     y_offset = yscan(j);
                     
-                    scan(i,j) = obj.calculate_coupling(receiver_func(obj.x+x_offset, obj.y+y_offset, obj.designfrequency));
+                    scan(i,j) = obj.calculate_coupling(receiver_func(obj.x+x_offset, obj.y+y_offset, obj.frequency));
                 end
             end
         end
@@ -189,7 +189,7 @@ classdef Simulation < handle
         function coupling = calculate_coupling(obj, receiverfield)
             integrand = (obj.E_current .* (Simulation.normalize(receiverfield)));
     
-            coupling = trapz(trapz(integrand));
+            coupling = trapz(trapz(integrand,1),2);
         end
         
         function power = calculate_power(obj)
