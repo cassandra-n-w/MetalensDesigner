@@ -48,12 +48,13 @@ ylim([-60, 0])
 title("2f - 2f Horn Coupling Lens Test, 480GHz")
 
 hold on;
-if exist("xcut")
-    plot(xscan, mag2db(abs(xcut(:,:,4))), yscan, mag2db(abs(ycut(:,:,4))) - 2.8);
-    legend(["X cut", "Y cut", "Simulated", "Simulated - 2.8dB"]);
+if exist("xcut", "var")
+    plot(xscan, meas_dB, yscan, meas_dB - 1.9);
+    legend(["X cut", "Y cut", "Simulated", "Simulated - 1.9dB"]);
 else
     legend(["X cut", "Y cut"]);
 end
+hold off;
 
 
 
