@@ -8,7 +8,8 @@ lensmodel.TL_prototype = proto_al;
 horn = DiagonalHornClass(3.6/2, 36);
 hornfunc = @(x,y,f) EField(horn, x,y,f);
 
-freqs = linspace(f*0.97, f*1.03, 7);
+freqs = [450, 460, 470, 480, 490, 500];
+freqs = freqs * 1e9;
 
 
 
