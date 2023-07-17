@@ -203,11 +203,22 @@ classdef Simulation < handle
         % takes the current E field and transforms it through a field
         % defined by S21_field. This field is a function of x, y, frequency
         function transform(obj, S21_field)
+            if (size(S21_field, 3) == 1)
+                S21_field = repmat(S21_field,1,1,length(obj.frequency));
+            end
+
             for i = 1:length(obj.frequency)
                 obj.E_current(:,:,i) = obj.E_current(:,:,i) .* S21_field(:,:,i);
             end    
         end
-        
+
+        function lensCircularMaskTransform(obj)
+            rad = obj.lens_model.diameter/2;
+            S = (obj.xvec.^2 + obj.yvec.^2 < rad^2);
+
+            obj.transform(S);
+        end
+
         function lensTransform(obj)
             
             %obj.lens_model.CalcSParam(obj.frequency);
