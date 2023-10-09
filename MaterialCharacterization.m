@@ -16,7 +16,7 @@ abcd_total = pagemtimes(pagemtimes( ...
 s_tot = abcd2s(abcd_total, Z0);
 
 s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
-subplot(1,3,1)
+%subplot(1,3,1)
 load("HDPEtestdata.mat");
 plot(freqs/1e9, s11, f, mag_load);
 xlabel("Frequency (GHz)");
@@ -25,6 +25,7 @@ ylim([min(s11)-5,0]);
 xlim([min(freqs/1e9), max(freqs/1e9)]);
 title("Polyimide core with glued HDPE");
 legend(["Model", "Measurement"])
+%% 
 
 % glued polyimide and polypropylene
 % initial nominal:
@@ -52,7 +53,7 @@ s_tot = abcd2s(abcd_total, Z0);
 
 s11_2 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
 
-subplot(1,3,2)
+%subplot(1,3,2)
 load("polypropylenetestdata.mat");
 plot(freqs/1e9, s11, f, mag_load, freqs/1e9, s11_2);
 xlabel("Frequency (GHz)");
@@ -70,6 +71,9 @@ abcd_total = pagemtimes(pagemtimes( ...
 
 s_tot = abcd2s(abcd_total, Z0);
 
+
+%% 
+
 % s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
 % subplot(2,2,3)
 % plot(freqs/1e9, s11);
@@ -80,7 +84,7 @@ s_tot = abcd2s(abcd_total, Z0);
 % title("Polyimide core with glued Polyethylene (destroyed)");
 
 % glued polyimide and polyethylene
-p_thick = 0.180;
+p_thick = 0.110;
 SiN_thick_layer = 300e-6;
 p_thick_layer = (p_thick - SiN_thick_layer * 10) / 11;
 abcd_total = polyimide.abcd_interp(freqs, p_thick_layer);
@@ -98,16 +102,26 @@ s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
 abcd_total = polyimide.abcd_interp(freqs, p_thick);
 
     
+p_thick = 0.130;
+SiN_thick_layer = 300e-6;
+p_thick_layer = (p_thick - SiN_thick_layer * 10) / 11;
+abcd_total = polyimide.abcd_interp(freqs, p_thick_layer);
+
+for i = 1:10
+    abcd_total = pagemtimes(abcd_total, SiN.abcd_interp(freqs, SiN_thick_layer));
+    abcd_total = pagemtimes(abcd_total, polyimide.abcd_interp(freqs, p_thick_layer));
+end
+
 
 s_tot = abcd2s(abcd_total, Z0);
 
 s11_2 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
 %subplot(1,3,3)
-subplot(1,1,1)
+%subplot(1,1,1)
 load("sintestdata.mat");
-plot(freqs/1e9, s11_2, freqs/1e9, s11);
-%plot(freqs/1e9, s11, f, mag_load, freqs/1e9, s11_2);
-legend(["180um polyimide only", "180um with 10 x 300nm interlayers"])
+%plot(freqs/1e9, s11_2, freqs/1e9, s11);
+plot(freqs/1e9, s11, f, mag_load, freqs/1e9, s11_2);
+legend(["110um total thickness", "Measurement", "130um total thickness"])
 xlabel("Frequency (GHz)");
 ylabel("S11 (dB)");
 ylim([min(s11_2)-5,0]);
