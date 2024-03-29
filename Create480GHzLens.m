@@ -13,11 +13,13 @@ numfreqs=31;
 freqs = linspace(f*0.88, f*1.12, numfreqs);
 
 
-el = Element('C:\\Users\\Cassie\\OneDrive\\Drive\\Documents\\My Work\\Research\\metamaterial_lens\\code\\HFSS Models\\Polyimide 3_4 g0p2 v99 touchstone');
+%el = Element('C:\\Users\\Cassie\\OneDrive\\Drive\\Documents\\My Work\\Research\\metamaterial_lens\\code\\HFSS Models\\Polyimide 3_4 g0p2 v99 touchstone');
+el = Element('..\\..\\HFSS Models\\Polyimide 3_4 g0p2 v99 touchstone');
 di = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
 
+
 % elements with aluminum instead of copper
-el_al = Element('C:\\Users\\Cassie\\OneDrive\\Drive\\Documents\\My Work\\Research\\metamaterial_lens\\code\\HFSS Models\\Polyimide 3_4 Aluminum g0p2 v99 touchstone');
+el_al = Element('..\\..\\HFSS Models\\Polyimide 3_4 Aluminum g0p2 v99 touchstone');
 
 % silicon nitride dielectric
 SiN = Dielectric(6.0 * ones(size(freqs)), 0.002, freqs, 150e-6, 450e-6);
