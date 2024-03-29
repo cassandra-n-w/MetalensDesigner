@@ -10,8 +10,14 @@
 % designed to be run AFTER Create480GHzLens.m
 
 % Temporary!!!
-% this is to test the effect of replacing copper with aluminum
-lensmodel.TL_prototype = proto_al;
+% this is to test the effect of replacing copper with aluminum, and the
+% dielectric with a lossier one
+di_lossier = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
+lensmodel.TL_prototype = ProtoTL(el_al, di_lossier);
+
+%test effect of thickness being greater than expected
+layer_thickness = 0.0111; %11.1 um layer thickness
+lensmodel.layer_thicknesses = layer_thickness*ones(11, 1);
 
 freqs = linspace(f*0.97, f*1.03, 7);
 
@@ -56,6 +62,10 @@ end
 [r,d,o] = sim.CalcLoss()
 
 waists = sim.FitGauss();
+
+loss = r.*d
+
+loss_dB = -10*log10(loss)
 
 w0 = waists(sim.designidx);
 gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
