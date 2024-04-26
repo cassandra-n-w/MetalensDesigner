@@ -27,6 +27,8 @@ classdef Lens < handle
         S_array
         S11_array
         dcode
+
+        thickness_mult
     end
     
     methods
@@ -42,6 +44,7 @@ classdef Lens < handle
             obj.dcode = 10;
             
             obj.TL_array = TL.empty(0);
+            obj.thickness_mult = 1;
             %obj.TL_array(obj.index_dimension, obj.index_dimension) = TL();
         end
         
@@ -210,6 +213,10 @@ classdef Lens < handle
             fprintf(gerberfile, 'X%dY%dD03*\n', round(xpos*1e6), round(ypos*1e6));
             
         end
+
+        function SetThicknessMult(obj, mult)
+            obj.thickness_mult = mult;
+        end
         
         function out = CalcSParam(obj,frequency)
             %METHOD1 Summary of this method goes here
@@ -231,7 +238,7 @@ classdef Lens < handle
                 for j = 1:jmax
                     thisTL = obj.TL_array(i,j);
                     
-                    S = proto.SParam(frequency, thisTL.sizes, thisTL.thicknesses);
+                    S = proto.SParam(frequency, thisTL.sizes, thisTL.thicknesses.*obj.thickness_mult);
                     
                     Sout(i,j,:) = S(2,1,:);
                     S11out(i,j,:) = S(1,1,:);
