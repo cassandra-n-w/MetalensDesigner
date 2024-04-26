@@ -44,7 +44,7 @@ classdef Simulation < handle
             obj.dx = lens_model.grid_dimension;
             obj.dy = lens_model.grid_dimension;
             diam = lens_model.diameter;
-            dim_mult = 1.5;
+            dim_mult = 10;
             
             % set up an x-y grid with the center at 0,0
             dims(1) = round(diam*dim_mult / (obj.dx));
@@ -152,17 +152,17 @@ classdef Simulation < handle
             
         end
 
-        function [farfield, kx, ky] = FarField(obj)
+        function [farfield, sintx, sinty] = FarField(obj)
             [ks, lambdas] = Simulation.f_to_k_lambda(obj.frequency);
             farfield = [];
-            kx = [];
-            ky = [];
+            sintx = [];
+            sinty = [];
             for i = 1:length(obj.frequency)
                 k = ks(i);
                 [field, kxi, kyi]= obj.FourierEtoA(obj.E_current(:,:,i));
-                farfield(:,:,i) = field;
-                kx(:, i) = kxi;
-                ky(:, i) = kyi;
+                farfield(:,:,i) = fftshift(field);
+                sintx(:, i) = linspace(min(kxi./k,[], "all"), max(kxi./k,[], "all"), size(kxi,1));
+                sinty(:, i) = linspace(min(kyi./k,[], "all"), max(kyi./k,[], "all"), size(kyi,2));
             end
         end
         
@@ -270,6 +270,13 @@ classdef Simulation < handle
             save = FourierAtoE(A, z, kx, ky, k);
             final = save(:,:,end);
 
+        end
+
+        function NormalizeField(obj)
+            for i = 1:length(obj.frequency)
+                obj.E_current(:,:,i) = Simulation.normalize(obj.E_current(:,:,i));
+            end         
+            
         end
         
         function [waist] = FitGauss(obj)

@@ -12,16 +12,16 @@
 % Temporary!!!
 % this is to test the effect of replacing copper with aluminum, and the
 % dielectric with a lossier one
-di_lossier = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
+di_lossier = Dielectric(3.5 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
 lensmodel.TL_prototype = ProtoTL(el_al, di_lossier);
 
 %test effect of thickness being greater than expected
-layer_thickness = 0.0111; %11.1 um layer thickness
-lensmodel.layer_thicknesses = layer_thickness*ones(11, 1);
+thickness_mult = 1.111; %11.1 um layer thickness
+lensmodel.SetThicknessMult(thickness_mult);
 
-freqs = linspace(f*0.97, f*1.03, 7);
+freqs = linspace(460e9, 499.9e9, 9);
 
-resim = true;
+resim = false;
 if (resim)
     sim = Simulation(lensmodel, freqs, f);
 
@@ -59,7 +59,72 @@ if (resim)
     sim.propagate(zlist);
 end
 
-[r,d,o] = sim.CalcLoss()
+
+% simulate far-field from illumination from focal point
+resim = true;
+if (resim)
+    sim = Simulation(lensmodel, freqs, f);
+    % waveguide dimensions for VDI wr-2.2
+    horn = RectangularWaveguideTE10(0.570,0.285);
+    hornfunc = @(x,y,f) EField(horn, x,y,f);
+
+    sim.initialize_E_field(hornfunc);
+
+    sim.propagate(lensmodel.focal_length);
+
+    sim.lensTransform();
+
+    sim.NormalizeField();
+
+    [farfield, sintx, sinty] = sim.FarField();
+    pattern_db = mag2db(abs(farfield(:,:,5)));
+    % imagesc(sintx(:,5),sinty(:,5),pattern_db);
+    % colorbar;
+    % clim([0, max(pattern_db, [],"all")]);
+    % xlim([-0.06,0.06]);
+    % ylim([-0.06,0.06]);
+    
+    hold on;
+    xcut = pattern_db(:,round(size(pattern_db, 2)/2));
+    anglesx = (180/pi)*real(asin(sintx(:,5)));
+    plot(anglesx,xcut-max(xcut), "--");
+    ycut = pattern_db(round(size(pattern_db, 1)/2),:);
+    anglesy = (180/pi)*real(asin(sinty(:,5)));
+    plot(anglesy,ycut-max(ycut), "--");
+    dcut = diag(pattern_db);
+    angles = anglesx*sqrt(2);
+    plot(angles,dcut-max(dcut), "--");
+    xlim([-3,3]); 
+    legend(["H-plane (meas)", ...
+            "D-plane (meas)", ...
+            "E-plane (meas)", ...
+            "H-plane (sim)", ...
+            "E-plane (sim)", ...
+            "D-plane (sim)"]);
+
+    max(xcut);
+
+    [max_wave, ix] = max(farfield);
+    [max_wave, iy] = max(max_wave);
+    % ix = ix(:,iy,:);
+    % 
+    % radsizex = diff(asin(sintx));
+    % radsizex = radsizex(ix, :);
+    % radsizey = diff(asin(sinty));
+    % radsizey = radsizey(iy, :);
+ 
+    radsizex = diff(asin(sintx));
+    radsizex = squeeze(radsizex(round(size(farfield,1)/2),:)); 
+    radsizey = diff(asin(sinty));
+    radsizey = squeeze(radsizey(round(size(farfield,2)/2),:));
+    
+    max_wave = squeeze(max_wave)';
+    directivity = abs(((4*pi)) .* max_wave);
+    directivity_db = mag2db(directivity);
+    total_power = trapz(asin(sinty(:,5)),trapz(asin(sintx(:,5)), farfield.*conj(farfield) ));
+end
+
+%[r,d,o] = sim.CalcLoss()
 
 waists = sim.FitGauss();
 
