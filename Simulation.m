@@ -151,6 +151,20 @@ classdef Simulation < handle
             end      
             
         end
+
+        function [farfield, kx, ky] = FarField(obj)
+            [ks, lambdas] = Simulation.f_to_k_lambda(obj.frequency);
+            farfield = [];
+            kx = [];
+            ky = [];
+            for i = 1:length(obj.frequency)
+                k = ks(i);
+                [field, kxi, kyi]= obj.FourierEtoA(obj.E_current(:,:,i));
+                farfield(:,:,i) = field;
+                kx(:, i) = kxi;
+                ky(:, i) = kyi;
+            end
+        end
         
         % breaks down loss into reflection, dielectric, and optical
         function [reflect, dielectric, optical] = CalcLoss(obj)
