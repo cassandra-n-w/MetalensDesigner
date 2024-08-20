@@ -44,7 +44,7 @@ classdef Simulation < handle
             obj.dx = lens_model.grid_dimension;
             obj.dy = lens_model.grid_dimension;
             diam = lens_model.diameter;
-            dim_mult = 10;
+            dim_mult = 1.5;
             
             % set up an x-y grid with the center at 0,0
             dims(1) = round(diam*dim_mult / (obj.dx));

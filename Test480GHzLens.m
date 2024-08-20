@@ -12,16 +12,18 @@
 % Temporary!!!
 % this is to test the effect of replacing copper with aluminum, and the
 % dielectric with a lossier one
-di_lossier = Dielectric(3.5 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
-lensmodel.TL_prototype = ProtoTL(el_al, di_lossier);
+el_al_thin = Element('..\\..\\HFSS Models\\Polyimide 3_4 200nm Aluminum g0p2 v99 touchstone');
+di_lossier = Dielectric(3.5 * ones(size(freqs)), 0.025, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
+lensmodel.TL_prototype = ProtoTL(el_al_thin, di_lossier);
 
 %test effect of thickness being greater than expected
-thickness_mult = 1.111; %11.1 um layer thickness
+thickness_mult = 1.14; %11.1 um layer thickness
+%thickness_mult = 1.0; %10 um layer thickness
 lensmodel.SetThicknessMult(thickness_mult);
 
 freqs = linspace(460e9, 499.9e9, 9);
 
-resim = false;
+resim = true;
 if (resim)
     sim = Simulation(lensmodel, freqs, f);
 
@@ -61,7 +63,7 @@ end
 
 
 % simulate far-field from illumination from focal point
-resim = true;
+resim = false;
 if (resim)
     sim = Simulation(lensmodel, freqs, f);
     % waveguide dimensions for VDI wr-2.2
@@ -123,14 +125,44 @@ if (resim)
     directivity_db = mag2db(directivity);
     total_power = trapz(asin(sinty(:,5)),trapz(asin(sintx(:,5)), farfield.*conj(farfield) ));
 end
+%% 
+hold on;
+% data taken directly from Alain's radiometric test.
+freq_meas = (460:5:500);
+loss_meas_dB = [2.76, 2.77, 2.73, 2.55, 2.52, 2.42, 2.38, 2.33, 2.34];
 
-%[r,d,o] = sim.CalcLoss()
+[r,d,o] = sim.CalcLoss()
 
 waists = sim.FitGauss();
 
 loss = r.*d
-
 loss_dB = -10*log10(loss)
+
+%plot(freq_meas, loss_meas_dB, freqs/1e9, loss_dB);
+plot(freqs/1e9, loss_dB);
+legend(["Measured", "Simulated (nominal)", "Simulated (realistic)"]);
+xlabel("Frequency (GHz)");
+ylabel("Loss (dB)")
+title("Lens Loss: Simulated vs Measured")
+ylim([0, 3]);
+hold off;
+
+%% 
+
+hold on;
+[ks, lambdas] = Simulation.f_to_k_lambda(freqs);
+diff_limit = diameter*diameter*(pi/4) * (4*pi) ./ (lambdas.*lambdas);
+diff_limit_dB = 10*log10((diff_limit)');
+optical_dB = -10*log10(o);
+direc_sim_dB = diff_limit_dB - optical_dB;
+plot(freqs/1e9, diff_limit_dB - optical_dB,"Color","#D95319"); 
+title("Directivity: Simulated vs Measured");
+ylabel("Directivity (dB)");
+legend(["Diff. Limit", "Directivity (meas)", "", "Directivity (sim)"]);
+
+hold off;
+
+%% 
 
 w0 = waists(sim.designidx);
 gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
