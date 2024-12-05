@@ -7,15 +7,13 @@
 % You should have received a copy of the GNU General Public License along with MetalensDesigner. If not, see <https://www.gnu.org/licenses/>. 
 
 
-classdef Dielectric
+classdef Dielectric < TwoPort_1Param
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
         Eps_r
         Tandelta
-        Freqs
-        abcd_grid
         unit
         Min
         Max
@@ -28,7 +26,7 @@ classdef Dielectric
             
             obj.Eps_r = epsr;
             obj.Tandelta = tand;
-            obj.Freqs = freqs;
+            obj.freqs = freqs;
             obj.Min = minsize;
             obj.Max = maxsize;
             
@@ -69,22 +67,7 @@ classdef Dielectric
                 
             end     
             
-            obj.abcd_grid = griddedInterpolant({1:2, 1:2, obj.Freqs, obj.unit}, abcd_matrix, 'linear', 'none');
-            
-        end
-        
-        function out = abcd_interp(obj, freq, z)
-            % interpolate between the dielectrics's ABCD parameters in both
-            % length and frequency dimensions
-            out = obj.abcd_grid({1:2, 1:2, freq, z});
-            
-%             out = zeros(4,4,numel(freq), numel(z));
-%             for i = 1:numel(freq)
-%                 for j = 1:numel(z)
-%                     
-%                     out(:,:,i,j) = (abcds(i))^(length(j)/obj.unit);
-%                 end
-%             end
+            obj.abcd_grid = griddedInterpolant({1:2, 1:2, obj.freqs, obj.unit}, abcd_matrix, 'linear', 'none');
             
         end
     end

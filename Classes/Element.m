@@ -7,7 +7,7 @@
 % You should have received a copy of the GNU General Public License along with MetalensDesigner. If not, see <https://www.gnu.org/licenses/>. 
 
 
-classdef Element
+classdef Element < TwoPort_1Param
     %Element: Contains S-parameters for multiple different sizes of a
     %single metal square element within metamaterial
     %   Detailed explanation goes here
@@ -17,11 +17,9 @@ classdef Element
     properties
         Sparams
         sizes
-        freqs
         Sparams_matrix
         impedance
         abcd_matrix
-        abcd_grid
         s_grid
     end
     
@@ -86,13 +84,6 @@ classdef Element
             
             out = obj.s_grid({1:2, 1:2, freq, size});
             
-        end
-        
-        function out = abcd_interp(obj, freq, size)
-            % interpolate between the element's ABCD parameters in both size
-            % and frequency dimensions
-            size = squeeze(size);
-            out = obj.abcd_grid({1:2, 1:2, freq, size});
         end
     end
 end

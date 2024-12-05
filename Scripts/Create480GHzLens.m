@@ -254,7 +254,7 @@ ylim([0,360]);
 
 xlabel("Frequency (GHz)");
 legend(["S21 Magnitude", "S11 Magnitude", "S21 Phase", "S11 Phase"]);
-title(strcat("S-parameters for arbitrary meta-atom (s = ", num2str(size), " of pixel grid spacing)"));
+title(strcat("S-parameters for arbitrary meta-atom (s = ", num2str(el_size), " of pixel grid spacing)"));
 
 %% plot sizes of optimized TLs by phase
 
