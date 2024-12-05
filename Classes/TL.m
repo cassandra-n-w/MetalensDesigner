@@ -28,10 +28,16 @@ classdef TL
             end
         end
         
-        function outputArg = method1(obj,inputArg)
+        function out = SParam(obj, frequencies)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
+            out = obj.MyProtoTL.SParamTL(frequencies, obj);
+        end
+
+        function out = SParamModify(obj, frequencies, thickness_mult)
+            %METHOD1 Summary of this method goes here
+            %   Detailed explanation goes here
+            out = obj.MyProtoTL.SParam(frequencies, obj.sizes, obj.thicknesses.*thickness_mult);
         end
     end
 end

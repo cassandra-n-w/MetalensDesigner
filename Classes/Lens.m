@@ -238,7 +238,7 @@ classdef Lens < handle
                 for j = 1:jmax
                     thisTL = obj.TL_array(i,j);
                     
-                    S = proto.SParam(frequency, thisTL.sizes, thisTL.thicknesses.*obj.thickness_mult);
+                    S = thisTL.SParamModify(frequency, obj.thickness_mult);
                     
                     Sout(i,j,:) = S(2,1,:);
                     S11out(i,j,:) = S(1,1,:);

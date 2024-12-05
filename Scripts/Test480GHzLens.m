@@ -168,8 +168,8 @@ w0 = waists(sim.designidx);
 gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
 gaussfield = gaussfunc(sim.x, sim.y, f);
 coupling = sim.calculate_coupling(gaussfield);
-plot = false;
-if (plot)
+do_plot = false;
+if (do_plot)
     % plot the ideal phase of the lens
     hold off;
     S = lensmodel.S_array(:,:,sim.designidx);
