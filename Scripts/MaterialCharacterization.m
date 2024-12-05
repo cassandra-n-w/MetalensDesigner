@@ -22,18 +22,21 @@ abcd_total = pagemtimes(pagemtimes( ...
              polyimide.abcd_interp(freqs, 0.132)), ...
              polyethylene.abcd_interp(freqs, 0.425));
 
+ProtoGenTest = ProtoTL_General([polyethylene, polyimide, polyethylene]);
+S_gentest = ProtoGenTest.SParam(freqs, [0.425,0.132,0.425]);
+
 s_tot = abcd2s(abcd_total, Z0);
 
 s11 = mag2db(abs(permute(s_tot(1,1,:), [3 2 1])));
 %subplot(1,3,1)
 load("HDPEtestdata.mat");
-plot(freqs/1e9, s11, f, mag_load);
+plot(freqs/1e9, s11, f, mag_load, freqs/1e9, mag2db(abs(squeeze(S_gentest(1,1,:)))));
 xlabel("Frequency (GHz)");
 ylabel("S11 (dB)");
 ylim([min(s11)-5,0]);
 xlim([min(freqs/1e9), max(freqs/1e9)]);
 title("Polyimide core with glued HDPE");
-legend(["Model", "Measurement"])
+legend(["Model", "Measurement", "test"])
 %% 
 
 % glued polyimide and polypropylene
