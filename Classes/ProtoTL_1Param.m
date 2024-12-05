@@ -1,4 +1,4 @@
-classdef ProtoTL_General < handle
+classdef ProtoTL_1Param < handle
     %PROTOTL_GENERAL A more general version of ProtoTL
     %   Can handle multiple dielectrics, differently ordered dielectrics and elements,
     %   etc.
@@ -8,7 +8,7 @@ classdef ProtoTL_General < handle
     end
     
     methods
-        function obj = ProtoTL_General(TwoPortArray)
+        function obj = ProtoTL_1Param(TwoPortArray)
             %PROTOTL_GENERAL Construct an instance of this class
             %   Detailed explanation goes here
             obj.TwoPortArray = TwoPortArray;

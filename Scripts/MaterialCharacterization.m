@@ -22,7 +22,7 @@ abcd_total = pagemtimes(pagemtimes( ...
              polyimide.abcd_interp(freqs, 0.132)), ...
              polyethylene.abcd_interp(freqs, 0.425));
 
-ProtoGenTest = ProtoTL_General([polyethylene, polyimide, polyethylene]);
+ProtoGenTest = ProtoTL_1Param([polyethylene, polyimide, polyethylene]);
 S_gentest = ProtoGenTest.SParam(freqs, [0.425,0.132,0.425]);
 
 s_tot = abcd2s(abcd_total, Z0);
