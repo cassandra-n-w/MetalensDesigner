@@ -32,7 +32,7 @@ classdef Simulation < handle
     end
     
     methods
-        function obj = Simulation(lens_model, frequencies, designfrequency)
+        function obj = Simulation(lens_model, frequencies, designfrequency, dim_mult)
             %UNTITLED Construct an instance of this class
             %   Detailed explanation goes here
             obj.c = 299792458000;
@@ -44,7 +44,10 @@ classdef Simulation < handle
             obj.dx = lens_model.grid_dimension;
             obj.dy = lens_model.grid_dimension;
             diam = lens_model.diameter;
-            dim_mult = 1.5;
+
+            if nargin < 4
+                dim_mult = 1.5;
+            end
             
             % set up an x-y grid with the center at 0,0
             dims(1) = round(diam*dim_mult / (obj.dx));

@@ -25,6 +25,12 @@ classdef Dielectric < TwoPort_1Param
             %   permittivity and loss tangent.
             
             obj.Eps_r = epsr;
+
+            if isscalar(epsr)
+                epsr = epsr * ones(size(freqs));
+            end
+
+
             obj.Tandelta = tand;
             obj.freqs = freqs;
             obj.Min = minsize;

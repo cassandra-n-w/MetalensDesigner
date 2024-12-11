@@ -29,6 +29,14 @@ classdef Lens < handle
         dcode
 
         thickness_mult
+
+        x
+        y
+        xvec
+        yvec
+        dims
+        bounds_small
+        bounds_big
     end
     
     methods
@@ -46,6 +54,20 @@ classdef Lens < handle
             obj.TL_array = TL.empty(0);
             obj.thickness_mult = 1;
             %obj.TL_array(obj.index_dimension, obj.index_dimension) = TL();
+
+            sim = Simulation(obj, 1, 1, 1.0);
+            obj.x = sim.x;
+            obj.y = sim.y;
+            obj.xvec = sim.xvec;
+            obj.yvec = sim.yvec;
+            obj.dims = sim.lensdims;
+            obj.bounds_big = sim.lensbounds_big;
+            obj.bounds_small = sim.lensbounds_small;
+        end
+
+        function out = DeclareTL_1Param(obj)
+            default_tl = TL_1Param(0,0);
+            obj.TL_array = createArray(obj.dims(1), obj.dims(2), FillValue=default_tl);
         end
         
         function gerberfy(obj)

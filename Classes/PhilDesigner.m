@@ -19,13 +19,13 @@ classdef PhilDesigner
             %METHOD1 Design lens using GRIN equation
             %   Assumes ideal varying dielectric (not realistic)
             
-            dist_field = sqrt(obj.sim.x.^2 + obj.sim.y.^2);
+            dist_field = sqrt(obj.lens_model.x.^2 + obj.lens_model.y.^2);
 
-            for i = 1:size(obj.sim.xvec)
+            for i = 1:length(obj.lens_model.xvec)
                 disp(i);
-                for j = 1:size(obj.sim.yvec)
-                    
-                    obj.lens_model.TL_array(i,j) = obj.DesignDielectricGrinTL(dist_field(i,j));
+                for j = 1:length(obj.lens_model.yvec)
+                    dist = min(dist_field(i,j), obj.lens_model.diameter/2);
+                    obj.lens_model.TL_array(i,j) = obj.DesignDielectricGrinTL(dist);
                 end
             end
 
@@ -34,7 +34,7 @@ classdef PhilDesigner
         function out = DesignDielectricGrinTL(obj, dist)
             %DesignDielectricGrinTL Given a dist from the lens center,
             %design a single dielectric grin TL
-            t_tot = obj.lens_model.thicknesses;
+            t_tot = obj.lens_model.layer_thicknesses;
             
             n0 = 7; % maximum index of refraction for the lens
 
@@ -42,7 +42,7 @@ classdef PhilDesigner
             
             f = obj.lens_model.focal_length; % focal length in millimeters
             
-            t0 = t_tot - 2.*lamb_x/(4. * np.sqrt(n0)); % Thickness of the high index region in the center of the lens
+            t0 = t_tot - 2.*lamb_x/(4. * sqrt(n0)); % Thickness of the high index region in the center of the lens
             
             r = dist; %radius in millimeters
             
@@ -50,11 +50,11 @@ classdef PhilDesigner
             
             c = ((n0*t0 - r^2/(2*f))/t_tot)^2; % coefficient
             
-            n_of_r = (b + np.sqrt(b^2 - 4.*c))/2.; % value of high index material as a function of radius
+            n_of_r = (b + sqrt(b^2 - 4.*c))/2.; % value of high index material as a function of radius
             
             t_of_r = (n0*t0 - r^2/(2*f))/n_of_r; % thickness of high index material as a function of radius
             
-            phase = 180.*(t_tot - t_of_r)*np.sqrt(n_of_r)/lamb_x; % phase of AR coating (should be 90 degrees)
+            phase = 180.*(t_tot - t_of_r)*sqrt(n_of_r)/lamb_x; % phase of AR coating (should be 90 degrees)
             
             ar_thick = (t_tot - t_of_r)/2; % thickness of AR coating as a function of radius (index is the square root of the high index part)
             

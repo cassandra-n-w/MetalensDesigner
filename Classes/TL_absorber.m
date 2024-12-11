@@ -5,12 +5,13 @@ classdef TL_absorber
     
     methods
         function obj = TL_absorber()
+            
         end
         
         function out = SParam(obj, frequencies)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-            out = zeros([2,2,frequencies]);
+            out = zeros([2,2,length(frequencies)]);
         end
 
         function out = SParamModify(obj, frequencies, thickness_mult)

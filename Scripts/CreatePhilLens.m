@@ -20,6 +20,7 @@ TLblah = TL_absorber();
 % 0 is used as a placerholder for the prototype TL in this lens, since each
 % TL has a different prototype
 lensmodel = Lens(diameter, total_thickness,  focal_length, g, 0, struct_diam);
+lensmodel.DeclareTL_1Param();
 
 sim = Simulation(lensmodel, freqs, f);
 
