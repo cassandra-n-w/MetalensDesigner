@@ -227,7 +227,7 @@ classdef Lens < handle
             obj.S11_array = zeros(sz_array(1), sz_array(2), numel(frequency));
             obj.sim_frequency = frequency;
             
-            proto = obj.TL_prototype;
+            % proto = obj.TL_prototype;
             Sout = zeros( [sz_array(1) sz_array(2) length(frequency)]);
             S11out = zeros( [sz_array(1) sz_array(2) length(frequency)]);
             
