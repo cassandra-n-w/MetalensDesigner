@@ -46,11 +46,11 @@ classdef Simulation < handle
             diam = lens_model.diameter;
 
             if nargin < 4
-                dim_mult = 1.5;
+                dim_mult = 2.5;
             end
             
             % set up an x-y grid with the center at 0,0
-            obj.lensdims(1) = round(diam/obj.dx.*1.57);
+            obj.lensdims(1) = round(diam/obj.dx);
             obj.lensdims(2) = round(diam/obj.dy);
 
             dims(1) = round(obj.lensdims(1).*dim_mult);
@@ -232,6 +232,8 @@ classdef Simulation < handle
             if (size(S21_field, 3) == 1)
                 S21_field = repmat(S21_field,1,1,length(obj.frequency));
             end
+
+            
 
             for i = 1:length(obj.frequency)
                 obj.E_current(:,:,i) = obj.E_current(:,:,i) .* S21_field(:,:,i);

@@ -5,7 +5,7 @@ freqs = linspace(f*0.5, f*6, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
-g=lambda/10; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
+g=lambda/20; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 
 total_thickness = 16; %16mm total thickness
 
