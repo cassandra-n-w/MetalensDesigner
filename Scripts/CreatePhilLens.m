@@ -45,3 +45,18 @@ sim.propagate(focal_length);
 
 strehl_ratio = sim.StrehlRatio();
 
+[r, d, o] = sim.CalcLoss();
+
+%%
+
+plot(freqs, strehl_ratio, freqs, r, freqs, d, freqs, o);
+
+legend(["Strehl ratio", "reflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
+
+%%
+
+passivity = sqrt(abs(lensmodel.S_array(:,:,100)).^2 + abs(lensmodel.S11_array(:,:,100).^2));
+
+imagesc(lensmodel.xvec, lensmodel.yvec, passivity);
+colorbar;
+

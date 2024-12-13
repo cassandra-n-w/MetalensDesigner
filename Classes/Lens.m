@@ -70,6 +70,12 @@ classdef Lens < handle
             obj.TL_array = createArray(obj.dims(1), obj.dims(2), FillValue=default_tl);
         end
         
+        
+        function ChangeProtoTL(obj, proto)
+            %change the prototype associated with every TL in the lens
+            
+        end
+        
         function gerberfy(obj)
             
             

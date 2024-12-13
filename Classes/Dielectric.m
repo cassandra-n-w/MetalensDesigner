@@ -75,6 +75,7 @@ classdef Dielectric < TwoPort_1Param
             abcd = s2abcd(s_matrix_flat, impedance_flat);
                 
             abcd_matrix = reshape(abcd, 2, 2, length(freqs_m), length(unit_m));
+            %abcd_matrix = [cosh(gamma .* unit_m), impedance.*sinh(gamma .* unit_m); sinh(gamma .* unit_m)./impedance, cosh(gamma .* unit_m)];
 
             obj.abcd_grid = griddedInterpolant({1:2, 1:2, obj.freqs, obj.unit}, abcd_matrix, 'linear', 'none');
             

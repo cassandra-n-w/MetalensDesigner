@@ -12,6 +12,9 @@
 % Temporary!!!
 % this is to test the effect of replacing copper with aluminum, and the
 % dielectric with a lossier one
+f=480e9;
+numfreqs=31;
+freqs = linspace(f*0.88, f*1.12, numfreqs);
 el_al_thin = Element('..\\..\\HFSS Models\\Polyimide 3_4 200nm Aluminum g0p2 v99 touchstone');
 di_lossier = Dielectric(3.5 * ones(size(freqs)), 0.025, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
 lensmodel.TL_prototype = ProtoTL(el_al_thin, di_lossier);
@@ -21,7 +24,9 @@ thickness_mult = 1.14; %11.1 um layer thickness
 %thickness_mult = 1.0; %10 um layer thickness
 lensmodel.SetThicknessMult(thickness_mult);
 
+
 freqs = linspace(460e9, 499.9e9, 9);
+focal_length = lensmodel.focal_length;
 
 resim = true;
 if (resim)
