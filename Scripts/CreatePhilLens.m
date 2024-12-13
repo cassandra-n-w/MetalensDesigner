@@ -15,8 +15,6 @@ struct_diam = 600;
 
 focal_length = 800;
 
-TLblah = TL_absorber();
-
 % 0 is used as a placerholder for the prototype TL in this lens, since each
 % TL has a different prototype
 lensmodel = Lens(diameter, total_thickness,  focal_length, g, 0, struct_diam);
@@ -27,3 +25,23 @@ sim = Simulation(lensmodel, freqs, f);
 designer = PhilDesigner(lensmodel, sim);
 
 designer.DesignDielectricGrin();
+
+%% 
+
+sim = Simulation(lensmodel, freqs, f);
+
+% calculate the gaussian coupling of the lens
+
+efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (lensmodel.diameter/2)) * exp(0);
+% initialize incoming plane wave
+sim.initialize_E_field(efield);
+
+lensmodel.CalcSParam(freqs);
+% transform through ideal lens pattern
+sim.lensTransform();
+
+% propagate
+sim.propagate(focal_length);
+
+strehl_ratio = sim.StrehlRatio();
+

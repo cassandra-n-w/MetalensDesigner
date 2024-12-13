@@ -259,8 +259,11 @@ classdef Lens < handle
                 i
                 for j = 1:jmax
                     thisTL = obj.TL_array(i,j);
-                    
-                    S = thisTL.SParamModify(frequency, obj.thickness_mult);
+                    if obj.thickness_mult ~= 1
+                        S = thisTL.SParamModify(frequency, obj.thickness_mult);
+                    else
+                        S = thisTL.SParam(frequency);
+                    end
                     
                     Sout(i,j,:) = S(2,1,:);
                     S11out(i,j,:) = S(1,1,:);
