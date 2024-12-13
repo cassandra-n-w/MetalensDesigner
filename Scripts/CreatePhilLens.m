@@ -7,7 +7,7 @@ lambda = Constants.c/f;
 %gridding size
 g=lambda/10; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 
-total_thickness = 16; %10 um layer thickness
+total_thickness = 16; %16mm total thickness
 
 % diameter of active lens area and structural lens area, respectively
 diameter = 600;

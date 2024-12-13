@@ -60,11 +60,11 @@ classdef PhilDesigner
             
             n_thick = t_of_r; % thickness of the high index part again
 
-            inner_dielectric = Dielectric(n_of_r.^2, 0, obj.sim.frequency, t_of_r./10, t_of_r.*10);
+            inner_dielectric = Dielectric(n_of_r.^2, 0, obj.sim.frequency, t_of_r./2, t_of_r.*2);
 
             % note we use n_inner as the AR dielectric because epsilson_ar is the
             % the square of n_ar, but n_ar is the square root of n_inner
-            ar_dielectric = Dielectric(n_of_r, 0, obj.sim.frequency, ar_thick./10, ar_thick.*10);
+            ar_dielectric = Dielectric(n_of_r, 0, obj.sim.frequency, ar_thick./2, ar_thick.*2);
     
             proto = ProtoTL_1Param([ar_dielectric, inner_dielectric, ar_dielectric]);
             TL = TL_1Param([ar_thick, n_thick, ar_thick], proto);
