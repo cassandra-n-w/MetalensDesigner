@@ -52,6 +52,7 @@ strehl_ratio = sim.StrehlRatio();
 plot(freqs, strehl_ratio, freqs, r, freqs, d, freqs, o);
 
 legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
+ylim([0,1]);
 
 %%
 

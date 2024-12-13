@@ -268,7 +268,7 @@ classdef Simulation < handle
 %                 final = save;
 %             else
             [A, kx, ky] = obj.FourierEtoA(E);
-            save = FourierAtoE(A, z, kx, ky, k);
+            save = Simulation.FourierAtoE(A, z, kx, ky, k);
             final = save(:,:,end);
 
         end
