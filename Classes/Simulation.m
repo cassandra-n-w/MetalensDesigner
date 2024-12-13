@@ -233,11 +233,7 @@ classdef Simulation < handle
                 S21_field = repmat(S21_field,1,1,length(obj.frequency));
             end
 
-            
-
-            for i = 1:length(obj.frequency)
-                obj.E_current(:,:,i) = obj.E_current(:,:,i) .* S21_field(:,:,i);
-            end    
+            obj.E_current = obj.E_current .* S21_field;  
         end
 
         function lensCircularMaskTransform(obj)
