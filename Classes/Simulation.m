@@ -50,11 +50,11 @@ classdef Simulation < handle
             end
             
             % set up an x-y grid with the center at 0,0
-            dims(1) = round(diam*dim_mult / (obj.dx));
-            dims(2) = round(diam*dim_mult / (obj.dy));
-            
-            obj.lensdims(1) = round(diam/obj.dx);
+            obj.lensdims(1) = round(diam/obj.dx.*1.57);
             obj.lensdims(2) = round(diam/obj.dy);
+
+            dims(1) = round(obj.lensdims(1).*dim_mult);
+            dims(2) = round(obj.lensdims(2).*dim_mult);
             
             obj.dims = dims;
             
@@ -65,7 +65,7 @@ classdef Simulation < handle
             obj.lensbounds_small = round((obj.dims - obj.lensdims) / 2) + 1;
             obj.lensbounds_big = obj.lensbounds_small + obj.lensdims - 1;
 
-            [x, y] = meshgrid(linspace(xbounds(1), xbounds(2), dims(1)), linspace(ybounds(1), ybounds(2), dims(2)));
+            [x, y] = meshgrid(linspace(xbounds(1), xbounds(2), dims(2)), linspace(ybounds(1), ybounds(2), dims(1)));
 
             obj.x = x * obj.dx;
             obj.y = y * obj.dy;

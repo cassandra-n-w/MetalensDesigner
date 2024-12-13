@@ -23,6 +23,11 @@ classdef Lens < handle
         
         TL_prototype
         TL_array
+
+        is_collection_design % boolean, indicates if the lens TLs are comprised of a limited collection of TL designs, rather than being unique for each pixel
+        TL_collection % a collection of the TLs to draw from 
+        S_collection % the S-matrices of the corresponding collection TLs
+        TL_index_map % maps each pixel to a TL in the collection, using an index
         
         S_array
         S11_array
@@ -67,10 +72,23 @@ classdef Lens < handle
 
         function out = DeclareTL_1Param(obj)
             default_tl = TL_1Param(0,0);
-            obj.TL_array = createArray(obj.dims(1), obj.dims(2), FillValue=default_tl);
+            obj.TL_array = createArray(length(obj.xvec), length(obj.yvec), FillValue=default_tl);
         end
         
-        
+        function SetRadialDesign(obj, TL_list, radii)
+            obj.is_collection_design = true;
+            obj.TL_collection = TL_list;
+            
+            dist_sqrd = obj.x .^ 2 + obj.y .^ 2;
+
+            % finds the index of each split into 
+            edges = [0, mean([radii(2:end); radii(1:end-1)]), +Inf];
+            index = discretize(dist_sqrd, edges.^2);
+
+            obj.TL_index_map = index;
+
+        end
+
         function ChangeProtoTL(obj, proto)
             %change the prototype associated with every TL in the lens
             
@@ -250,29 +268,47 @@ classdef Lens < handle
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             sz_array = size(obj.TL_array);
-            
-            obj.S_array = zeros(sz_array(1), sz_array(2), numel(frequency));
-            obj.S11_array = zeros(sz_array(1), sz_array(2), numel(frequency));
             obj.sim_frequency = frequency;
             
-            % proto = obj.TL_prototype;
-            Sout = zeros( [sz_array(1) sz_array(2) length(frequency)]);
-            S11out = zeros( [sz_array(1) sz_array(2) length(frequency)]);
-            
-            imax = sz_array(1);
-            jmax = sz_array(2);
-            for i = 1:imax
-                i
-                for j = 1:jmax
-                    thisTL = obj.TL_array(i,j);
-                    if obj.thickness_mult ~= 1
-                        S = thisTL.SParamModify(frequency, obj.thickness_mult);
-                    else
-                        S = thisTL.SParam(frequency);
+            if (obj.is_collection_design)
+                obj.S_collection = zeros([2,2,length(frequency),length(obj.TL_collection)]);
+
+                for i = 1:length(obj.TL_collection)
+                    if (mod(i,10) == 0)
+                        disp(i);
                     end
-                    
-                    Sout(i,j,:) = S(2,1,:);
-                    S11out(i,j,:) = S(1,1,:);
+                    thisTL = obj.TL_collection(i);
+                    obj.S_collection(:,:,:,i) = thisTL.SParamModify(frequency, obj.thickness_mult);    
+                end
+                Sout_temp = obj.S_collection(2,1,:,obj.TL_index_map);
+                Sout = reshape(Sout_temp, length(frequency), obj.dims(1), obj.dims(2));
+                Sout = permute(Sout, [2,3,1]);
+                S11out = obj.S_collection(1,1,:,obj.TL_index_map);
+                S11out = reshape(S11out, length(frequency), obj.dims(1), obj.dims(2));
+                S11out = permute(S11out, [2,3,1]);
+            else
+                obj.S_array = zeros(sz_array(1), sz_array(2), numel(frequency));
+                obj.S11_array = zeros(sz_array(1), sz_array(2), numel(frequency));
+
+                % proto = obj.TL_prototype;
+                Sout = zeros( [sz_array(1) sz_array(2) length(frequency)]);
+                S11out = zeros( [sz_array(1) sz_array(2) length(frequency)]);
+                
+                imax = sz_array(1);
+                jmax = sz_array(2);
+                for i = 1:imax
+                    i
+                    for j = 1:jmax
+                        thisTL = obj.TL_array(i,j);
+                        if obj.thickness_mult ~= 1
+                            S = thisTL.SParamModify(frequency, obj.thickness_mult);
+                        else
+                            S = thisTL.SParam(frequency);
+                        end
+                        
+                        Sout(i,j,:) = S(2,1,:);
+                        S11out(i,j,:) = S(1,1,:);
+                    end
                 end
             end
             obj.S_array = Sout;

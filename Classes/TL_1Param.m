@@ -25,7 +25,9 @@ classdef TL_1Param
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             out = obj.SParam(frequencies);
-            warning("SParamModify not yet implemented for TL_1Param. Defaulting to standard SParam behaviour");
+            if (thickness_mult ~= 1)
+                warning("SParamModify not yet implemented for TL_1Param. Defaulting to standard SParam behaviour");
+            end
             
         end
     end

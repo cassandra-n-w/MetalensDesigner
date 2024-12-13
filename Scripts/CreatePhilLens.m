@@ -1,7 +1,7 @@
 
 f = 9e9; % 480GHz central frequency
-numfreqs=101;
-freqs = linspace(f*0.5, f*2, numfreqs);
+numfreqs=201;
+freqs = linspace(f*0.5, f*6, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
@@ -51,7 +51,7 @@ strehl_ratio = sim.StrehlRatio();
 
 plot(freqs, strehl_ratio, freqs, r, freqs, d, freqs, o);
 
-legend(["Strehl ratio", "reflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
+legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
 
 %%
 
@@ -60,3 +60,7 @@ passivity = sqrt(abs(lensmodel.S_array(:,:,100)).^2 + abs(lensmodel.S11_array(:,
 imagesc(lensmodel.xvec, lensmodel.yvec, passivity);
 colorbar;
 
+%%
+phase = angle(lensmodel.S_array(:,:,40));
+imagesc(lensmodel.xvec, lensmodel.yvec, phase);
+colorbar;

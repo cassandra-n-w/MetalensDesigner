@@ -19,15 +19,30 @@ classdef PhilDesigner
             %METHOD1 Design lens using GRIN equation
             %   Assumes ideal varying dielectric (not realistic)
             
-            dist_field = sqrt(obj.lens_model.x.^2 + obj.lens_model.y.^2);
+            % dist_field = sqrt(obj.lens_model.x.^2 + obj.lens_model.y.^2);
+            % 
+            % for i = 1:length(obj.lens_model.xvec)
+            %     disp(i);
+            %     for j = 1:length(obj.lens_model.yvec)
+            %         dist = min(dist_field(i,j), obj.lens_model.diameter/2);
+            %         obj.lens_model.TL_array(i,j) = obj.DesignDielectricGrinTL(dist);
+            %     end
+            % end
+            
+            dr = obj.lens_model.grid_dimension / 4;
+            radii = 0:dr:(obj.lens_model.diameter/2);
 
-            for i = 1:length(obj.lens_model.xvec)
-                disp(i);
-                for j = 1:length(obj.lens_model.yvec)
-                    dist = min(dist_field(i,j), obj.lens_model.diameter/2);
-                    obj.lens_model.TL_array(i,j) = obj.DesignDielectricGrinTL(dist);
+            default_tl = TL_1Param(0,0);
+            TL_collection = createArray([length(radii),1], FillValue=default_tl);
+
+            for i=1:length(radii)
+                if (mod(i,10) == 0)
+                    disp(i);
                 end
+                TL_collection(i) = obj.DesignDielectricGrinTL(radii(i));
             end
+
+            obj.lens_model.SetRadialDesign(TL_collection, radii);
 
         end
 
