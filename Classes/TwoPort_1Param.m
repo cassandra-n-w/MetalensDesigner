@@ -8,6 +8,8 @@ classdef TwoPort_1Param
     properties
         freqs
         abcd_grid
+        s_grid
+        impedance
     end
     
     methods
@@ -15,7 +17,10 @@ classdef TwoPort_1Param
             % interpolate between the element's ABCD parameters in both size
             % and frequency dimensions
             size = squeeze(size);
-            out = obj.abcd_grid({1:2, 1:2, freq, size});
+            %out = obj.abcd_grid({1:2, 1:2, freq, size});
+
+            s = obj.s_grid({1:2, 1:2, freq, size});
+            out = s2abcd(s, obj.impedance);
         end
     end
 end

@@ -18,9 +18,7 @@ classdef Element < TwoPort_1Param
         Sparams
         sizes
         Sparams_matrix
-        impedance
         abcd_matrix
-        s_grid
     end
     
     methods
