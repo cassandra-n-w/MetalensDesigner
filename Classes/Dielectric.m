@@ -37,7 +37,7 @@ classdef Dielectric < TwoPort_1Param
             obj.Max = maxsize;
             
             %Z0 = 376.730314; % ohms; impedance of free space
-            obj.unit = logspace(log10(minsize), log10(maxsize), log10(maxsize/minsize) * 60); % in mm; unit calculation length is 1um
+            obj.unit = logspace(log10(minsize), log10(maxsize), log10(maxsize/minsize) * 1000); % in mm; unit calculation length is 1um
             %c = 299792458000; % speed of light (mm/s);
             
             

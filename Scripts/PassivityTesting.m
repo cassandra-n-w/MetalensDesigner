@@ -1,8 +1,8 @@
 freqs = 1e9 * logspace(0,3,500);
 freqs2 = 1e9 * logspace(3,3,5000);
-lengths = logspace(2.1,2.9,50000);
+lengths = logspace(0,3,50000);
 
-dielectric = Dielectric(35, 0, freqs, 100, 1000);
+dielectric = Dielectric(35, 0, freqs, 1, 1000);
 
 abcd = dielectric.abcd_interp(freqs2, 100);
 

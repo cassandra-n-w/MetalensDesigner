@@ -18,9 +18,11 @@ classdef TwoPort_1Param
             % and frequency dimensions
             size = squeeze(size);
             %out = obj.abcd_grid({1:2, 1:2, freq, size});
-
             s = obj.s_grid({1:2, 1:2, freq, size});
-            out = s2abcd(s, obj.impedance);
+
+            s_matrix_flat = reshape(s, 2, 2, length(freq) * length(size));
+            abcd = s2abcd(s_matrix_flat, obj.impedance);
+            out = reshape(abcd, 2, 2, length(freq), length(size));
         end
     end
 end
