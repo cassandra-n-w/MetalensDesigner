@@ -24,6 +24,7 @@ classdef TwoPort_1Param
             abcd = s2abcd(s_matrix_flat, obj.impedance);
             out = reshape(abcd, 2, 2, length(freq), length(size));
         end
+
     end
 end
 

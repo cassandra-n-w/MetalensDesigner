@@ -13,6 +13,7 @@ classdef Dielectric < TwoPort_1Param
     
     properties
         Eps_r
+        Eps_r_grid
         Tandelta
         unit
         Min
@@ -24,11 +25,11 @@ classdef Dielectric < TwoPort_1Param
             %Dielectric Create a new dielectric material using its relative
             %   permittivity and loss tangent.
             
-            obj.Eps_r = epsr;
-
             if isscalar(epsr)
                 epsr = epsr * ones(size(freqs));
             end
+            obj.Eps_r = epsr;
+            obj.Eps_r_grid = griddedInterpolant(freqs, obj.Eps_r, 'linear','nearest');
 
 
             obj.Tandelta = tand;
@@ -76,8 +77,9 @@ classdef Dielectric < TwoPort_1Param
 
             % create a new S parameter matrix normalized to vacuum
             % characteristic impedance
-            s_matrix_vacuum = abcd2s(abcd, Constants.Z0);
-            obj.impedance = Constants.Z0;
+            obj.impedance = impedance_flat(1);
+            s_matrix_vacuum = s2s(s_matrix_flat, impedance_flat, obj.impedance);
+            
             s_matrix_vacuum = reshape(s_matrix_vacuum, 2, 2, length(freqs_m), length(unit_m));
                 
             abcd_matrix = reshape(abcd, 2, 2, length(freqs_m), length(unit_m));
@@ -85,6 +87,56 @@ classdef Dielectric < TwoPort_1Param
 
             obj.abcd_grid = griddedInterpolant({1:2, 1:2, obj.freqs, obj.unit}, abcd_matrix, 'linear', 'none');
             obj.s_grid = griddedInterpolant({1:2,1:2, obj.freqs, obj.unit}, s_matrix_vacuum, 'linear', 'none');
+        end
+
+        function out = abcd_interp(obj, freq, lengths)
+            % interpolate between the element's ABCD parameters in both size
+            % and frequency dimensions
+            lengths = squeeze(lengths);
+            %out = obj.abcd_grid({1:2, 1:2, freq, size});
+            s = obj.calc_s(freq, lengths);
+
+            s_matrix_flat = reshape(s, 2, 2, length(freq) * length(lengths));
+            abcd = s2abcd(s_matrix_flat, obj.impedance);
+            out = reshape(abcd, 2, 2, length(freq), length(lengths));
+        end
+
+        function out = calc_s(obj, freqs, lengths)
+            % calculate abcd matrices
+            abcd_matrix = zeros(2,2,numel(freqs),numel(obj.unit));
+
+            % convert things into matrices for vectorization
+            epsr = obj.Eps_r_grid(freqs);
+            epsr_m = reshape(epsr, 1, 1, []);
+            freqs_m = reshape(freqs, 1, 1, []);
+            unit_m = reshape(lengths, 1, 1, 1, []);
+
+            s_matrix = zeros(2,2,length(freqs_m), length(unit_m));
+            
+            % note: this is probably reliant on good dielectric
+            % approximation. can possibly be extended to include all
+            % mu = 1.0 materials
+            k = sqrt(epsr_m) .* 2.*pi.*freqs_m./Constants.c;
+            beta = k;
+            alpha = k .* obj.Tandelta / 2;
+            gamma = alpha + 1.0i * beta;
+            prop = exp(-gamma .* unit_m);
+            
+            s_matrix(2,1,:,:) = prop;
+            s_matrix(1,2,:,:) = prop;
+            %s_matrix(4,3,:) = prop;
+            %s_matrix(3,4,:) = prop;
+            
+            %s_matrix = [0 prop(i) 0 0; prop(i) 0 0 0; 0 0 0 prop(i); 0 0 prop(i) 0];
+            impedance = ones(size(unit_m)) .* Constants.Z0 ./ sqrt(epsr_m);
+
+            s_matrix_flat = reshape(s_matrix, 2, 2, length(unit_m) * length(freqs_m));
+            impedance_flat = reshape(impedance, 1, 1, length(unit_m) * length(freqs_m));
+
+            % create a new S parameter matrix normalized to vacuum
+            % characteristic impedance
+            obj.impedance = impedance_flat(1);
+            out = s2s(s_matrix_flat, impedance_flat, obj.impedance);
         end
     end
 end

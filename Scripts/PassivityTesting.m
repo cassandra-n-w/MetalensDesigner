@@ -1,5 +1,5 @@
 freqs = 1e9 * logspace(0,3,500);
-freqs2 = 1e9 * logspace(3,3,5000);
+freqs2 = 1e9 * logspace(0,3,500);
 lengths = logspace(0,3,50000);
 
 dielectric = Dielectric(35, 0, freqs, 1, 1000);
@@ -10,10 +10,13 @@ s = abcd2s(abcd, Constants.Z0);
 
 total = abs(s(1,1,:)).^2 + abs(s(2,1,:)).^2;
 total = squeeze(total);
-
+hold off;
 plot(freqs2, total);
+hold on;
+%% 
 
-abcd = dielectric.abcd_interp(freqs(10), lengths);
+
+abcd = dielectric.abcd_interp(freqs(250), lengths);
 abcd = reshape(abcd, 2,2,[]);
 s = abcd2s(abcd, Constants.Z0);
 
