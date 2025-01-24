@@ -92,6 +92,12 @@ classdef Simulation < handle
 
             quicksim.propagate(obj.lens_model.focal_length);
             E = quicksim.E_current;
+
+            E_test = abs(E) + ~mag;
+
+            % uncomment this line to test the edge taper
+            %ratio = min(E_test, [], [1,2])./max(abs(E), [], [1,2])
+
             theta = angle(E);
 
             phasepattern = mag .*exp(-1i*theta);
@@ -118,17 +124,33 @@ classdef Simulation < handle
         function waist = calc_waist(obj)
             % approximate the desired far-field beam angle of the receiver
             % horn as z_focus / (2 * diameter of lens)
-            theta0 = (obj.lens_model.diameter) / (2*obj.lens_model.focal_length);
             [k, lambda] = Simulation.f_to_k_lambda(obj.designfrequency);
-            waist =  lambda/(pi*theta0);
+            
+            % calculate gaussian beam with 13dB edge taper
+            foc = obj.lens_model.focal_length;
+            r = obj.lens_model.diameter/2;
+            taper = 13; % in units of dB
+            beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
+            
+            waist_squared = (beam_radius_squared - sqrt(beam_radius_squared.^2 - 4*(lambda * foc / pi).^2))/2;
+
+            waist = sqrt(waist_squared);
         end
 
         function waist = calc_waist_multifreq(obj, f)
             % approximate the desired far-field beam angle of the receiver
             % horn as z_focus / (2 * diameter of lens)
-            theta0 = (obj.lens_model.diameter) / (2*obj.lens_model.focal_length);
             [k, lambda] = Simulation.f_to_k_lambda(f);
-            waist =  lambda/(pi*theta0);
+
+            % calculate gaussian beam with 13dB edge taper
+            foc = obj.lens_model.focal_length;
+            r = obj.lens_model.diameter/2;
+            taper = 13; % in units of dB
+            beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
+            
+            waist_squared = (beam_radius_squared - sqrt(beam_radius_squared.^2 - 4*(lambda * foc / pi).^2))/2;
+
+            waist = sqrt(waist_squared);
         end
         
         function initialize_E_field(obj, E_func)
