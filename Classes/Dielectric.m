@@ -94,16 +94,16 @@ classdef Dielectric < TwoPort_1Param
             % and frequency dimensions
             lengths = squeeze(lengths);
             %out = obj.abcd_grid({1:2, 1:2, freq, size});
-            s = obj.calc_s(freq, lengths);
+            [s, impedance] = obj.calc_s(freq, lengths);
 
             s_matrix_flat = reshape(s, 2, 2, length(freq) * length(lengths));
-            abcd = s2abcd(s_matrix_flat, obj.impedance);
+            abcd = s2abcd(s_matrix_flat, impedance);
             out = reshape(abcd, 2, 2, length(freq), length(lengths));
         end
 
-        function out = calc_s(obj, freqs, lengths)
+        function [s, impedance] = calc_s(obj, freqs, lengths)
             % calculate abcd matrices
-            abcd_matrix = zeros(2,2,numel(freqs),numel(obj.unit));
+            %abcd_matrix = zeros(2,2,numel(freqs),numel(obj.unit));
 
             % convert things into matrices for vectorization
             epsr = obj.Eps_r_grid(freqs);
@@ -135,8 +135,8 @@ classdef Dielectric < TwoPort_1Param
 
             % create a new S parameter matrix normalized to vacuum
             % characteristic impedance
-            obj.impedance = impedance_flat(1);
-            out = s2s(s_matrix_flat, impedance_flat, obj.impedance);
+            impedance = impedance_flat(1);
+            s = s2s(s_matrix_flat, impedance_flat, obj.impedance);
         end
     end
 end
