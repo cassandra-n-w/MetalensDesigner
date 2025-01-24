@@ -83,7 +83,7 @@ classdef Simulation < handle
 
             quicksim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
 
-            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./quicksim.calc_waist_multifreq(f).^2);
+            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./(quicksim.calc_waist_multifreq(f)).^2);
 
             quicksim.initialize_E_field(gaussfunc);
 
@@ -280,6 +280,13 @@ classdef Simulation < handle
 
         end
 
+        function [save, final] = PropagateField_multifreq(obj, E, z, k)
+           
+            [A, kx, ky] = obj.FourierEtoA(E);
+            save = Simulation.FourierAtoE(A, z, kx, ky, k);
+            final = save(:,:,:,end);
+        end
+
         function NormalizeField(obj)
             for i = 1:length(obj.frequency)
                 obj.E_current(:,:,i) = Simulation.normalize(obj.E_current(:,:,i));
@@ -308,7 +315,7 @@ classdef Simulation < handle
             
             A = fft2(conj(E));
 
-            dims = flip(size(E) - [1, 1]);
+            dims = flip(size(E,[1,2]) - [1, 1]);
             %dims = flip(size(E));
 
             % calculate kx and ky parts of the k vector
@@ -401,6 +408,20 @@ classdef Simulation < handle
 
             kz = sqrt(k0^2 - kx.^2 - ky.^2);
             zscale = permute(z, [3 1 2]);
+            Az = (A .* exp(kz .* zscale * 1.0i));    
+
+            % note the conjugate is taken to take into account phase convention
+            E = conj(ifft2(Az));
+        end
+
+        function [E] = FourierAtoE_multifreq(A, z, kx, ky, k0)
+        %FourierAtoE Summary of this function goes here
+        %   Detailed explanation goes here
+            % put frequency in dimension 3
+            k0 = reshape(k0, [1,1,[]]);
+            kz = sqrt(k0.^2 - kx.^2 - ky.^2);
+            % put z in dimension 4
+            zscale = reshape(z, [1,1,1,[]]);
             Az = (A .* exp(kz .* zscale * 1.0i));    
 
             % note the conjugate is taken to take into account phase convention
