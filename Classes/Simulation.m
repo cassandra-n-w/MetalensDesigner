@@ -83,8 +83,7 @@ classdef Simulation < handle
 
             quicksim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
 
-            w0 = quicksim.calc_waist();
-            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)/w0^2);
+            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./quicksim.calc_waist_multifreq(f).^2);
 
             quicksim.initialize_E_field(gaussfunc);
 
@@ -121,6 +120,14 @@ classdef Simulation < handle
             % horn as z_focus / (2 * diameter of lens)
             theta0 = (obj.lens_model.diameter) / (2*obj.lens_model.focal_length);
             [k, lambda] = Simulation.f_to_k_lambda(obj.designfrequency);
+            waist =  lambda/(pi*theta0);
+        end
+
+        function waist = calc_waist_multifreq(obj, f)
+            % approximate the desired far-field beam angle of the receiver
+            % horn as z_focus / (2 * diameter of lens)
+            theta0 = (obj.lens_model.diameter) / (2*obj.lens_model.focal_length);
+            [k, lambda] = Simulation.f_to_k_lambda(f);
             waist =  lambda/(pi*theta0);
         end
         
