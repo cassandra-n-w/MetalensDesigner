@@ -153,13 +153,16 @@ classdef Simulation < handle
                 saved_num = saved_num(3);
             end
             new_num = length(z);
-            for i = 1:length(obj.frequency)
-                k = ks(i);
-                [save, final] = obj.PropagateField(obj.E_current(:,:,i), z, k);
-                obj.E_current(:,:,i) = final;
-                obj.E_saved(:,:,(saved_num+1) : (saved_num+new_num), i) = save;
-            end      
-            
+            % for i = 1:length(obj.frequency)
+            %     k = ks(i);
+            %     [save, final] = obj.PropagateField(obj.E_current(:,:,i), z, k);
+            %     obj.E_current(:,:,i) = final;
+            %     obj.E_saved(:,:,(saved_num+1) : (saved_num+new_num), i) = save;
+            % end   
+
+            [save, final] = obj.PropagateField_multifreq(obj.E_current, z, ks);
+            obj.E_current = final;
+            obj.E_saved(:,:,(saved_num+1) : (saved_num+new_num), :) = permute(save, [1,2,4,3]);
         end
 
         function [farfield, sintx, sinty] = FarField(obj)
@@ -177,7 +180,7 @@ classdef Simulation < handle
         end
         
         % breaks down loss into reflection, dielectric, and optical
-        function [reflect, dielectric, optical] = CalcLoss(obj)
+        function [reflect, dielectric, optical, strehl] = CalcLoss(obj)
             
 
             S11 = obj.lens_model.PadGeneral(obj.lens_model.S11_array, zeros(obj.dims), obj.frequency);
@@ -199,9 +202,9 @@ classdef Simulation < handle
             
             dielectric = squeeze(sim.calculate_power()) ./ reflect;
             
-            optical = squeeze(sim.StrehlRatio());
+            strehl = squeeze(sim.StrehlRatio());
             
-            optical = optical ./ (dielectric .* reflect);
+            optical = strehl ./ (dielectric .* reflect);
             
         end
         
@@ -283,7 +286,7 @@ classdef Simulation < handle
         function [save, final] = PropagateField_multifreq(obj, E, z, k)
            
             [A, kx, ky] = obj.FourierEtoA(E);
-            save = Simulation.FourierAtoE(A, z, kx, ky, k);
+            save = Simulation.FourierAtoE_multifreq(A, z, kx, ky, k);
             final = save(:,:,:,end);
         end
 
@@ -418,10 +421,10 @@ classdef Simulation < handle
         %FourierAtoE Summary of this function goes here
         %   Detailed explanation goes here
             % put frequency in dimension 3
-            k0 = reshape(k0, [1,1,[]]);
+            k0 = reshape(k0, 1,1,[]);
             kz = sqrt(k0.^2 - kx.^2 - ky.^2);
             % put z in dimension 4
-            zscale = reshape(z, [1,1,1,[]]);
+            zscale = reshape(z, 1,1,1,[]);
             Az = (A .* exp(kz .* zscale * 1.0i));    
 
             % note the conjugate is taken to take into account phase convention

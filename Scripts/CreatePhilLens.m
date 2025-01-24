@@ -43,9 +43,9 @@ sim.lensTransform();
 % propagate
 sim.propagate(focal_length);
 
-strehl_ratio = sim.StrehlRatio();
+%strehl_ratio = sim.StrehlRatio();
 
-[r, d, o] = sim.CalcLoss();
+[r, d, o, strehl_ratio] = sim.CalcLoss();
 
 %%
 
