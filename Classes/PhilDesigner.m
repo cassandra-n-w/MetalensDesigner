@@ -5,6 +5,7 @@ classdef PhilDesigner
     properties
         lens_model
         sim
+        total_thickness
     end
     
     methods
@@ -13,9 +14,14 @@ classdef PhilDesigner
             %   Detailed explanation goes here
             obj.lens_model = lens_model;
             obj.sim = sim;
+            obj.total_thickness = obj.lens_model.layer_thicknesses;
         end
         
-        function out = DesignDielectricGrin(obj)
+        function DesignDielectricGrin(obj)
+            obj.DesignDielectricGrinGeneral(0);
+        end
+
+        function DesignDielectricGrinGeneral(obj, layer_thickness)
             %METHOD1 Design lens using GRIN equation
             %   Assumes ideal varying dielectric (not realistic)
             
@@ -39,17 +45,24 @@ classdef PhilDesigner
                 if (mod(i,10) == 0)
                     disp(i);
                 end
-                TL_collection(i) = obj.DesignDielectricGrinTL(radii(i));
+                if (layer_thickness == 0)
+                    TL_collection(i) = obj.DesignDielectricGrinTL(radii(i));
+                else
+                    TL_collection(i) = obj.DesignDielectricGrinTLDiscretize(radii(i), layer_thickness);
+                end
             end
 
             obj.lens_model.SetRadialDesign(TL_collection, radii);
-
         end
 
-        function out = DesignDielectricGrinTL(obj, dist)
-            %DesignDielectricGrinTL Given a dist from the lens center,
-            %design a single dielectric grin TL
-            t_tot = obj.lens_model.layer_thicknesses;
+        function DesignDielectricGrinDiscretizeZ(obj, layer_thickness)
+            obj.DesignDielectricGrinGeneral(layer_thickness);
+        end
+
+
+        %% returns the index of the center part, thickness of the center part, and thickness of the AR coating part 
+        function [n_of_r, t_of_r, ar_thick] = DesignIdealDielectric(obj, dist)
+            t_tot = obj.total_thickness;
             
             n0 = 7; % maximum index of refraction for the lens
 
@@ -74,8 +87,40 @@ classdef PhilDesigner
             ar_thick = (t_tot - t_of_r)/2; % thickness of AR coating as a function of radius (index is the square root of the high index part)
             
             n_thick = t_of_r; % thickness of the high index part again
+        end
 
-            inner_dielectric = Dielectric(n_of_r.^2, 0, obj.sim.frequency, t_of_r./1.2, t_of_r.*1.2);
+        function out = DesignDielectricGrinTL(obj, dist)
+            %DesignDielectricGrinTL Given a dist from the lens center,
+            %design a single dielectric grin TL
+
+            [n_of_r, n_thick, ar_thick] = obj.DesignIdealDielectric(dist);
+
+            inner_dielectric = Dielectric(n_of_r.^2, 0, obj.sim.frequency, n_thick./1.2, n_thick.*1.2);
+
+            % note we use n_inner as the AR dielectric because epsilson_ar is the
+            % the square of n_ar, but n_ar is the square root of n_inner
+            ar_dielectric = Dielectric(n_of_r, 0, obj.sim.frequency, ar_thick./1.2, ar_thick.*1.2);
+    
+            proto = ProtoTL_1Param([ar_dielectric, inner_dielectric, ar_dielectric]);
+            TL = TL_1Param([ar_thick, n_thick, ar_thick], proto);
+
+            out = TL;
+        end
+
+        function out = DesignDielectricGrinTLDiscretize(obj, dist, layer_thickness)
+            %DesignDielectricGrinTL Given a dist from the lens center,
+            %design a single dielectric grin TL
+
+            [n_of_r, n_thick, ar_thick] = obj.DesignIdealDielectric(dist);
+
+            ar_thick = layer_thickness * (round(ar_thick/layer_thickness));
+            n_thick = obj.total_thickness - 2*ar_thick;
+
+            assert(n_thick >= 0);
+            assert(ar_thick >= 0);
+            assert(n_thick + 2*ar_thick == obj.total_thickness);
+
+            inner_dielectric = Dielectric(n_of_r.^2, 0, obj.sim.frequency, n_thick./1.2, n_thick.*1.2);
 
             % note we use n_inner as the AR dielectric because epsilson_ar is the
             % the square of n_ar, but n_ar is the square root of n_inner

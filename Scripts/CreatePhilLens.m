@@ -1,7 +1,7 @@
 
 f = 9e9; % 480GHz central frequency
 numfreqs=201;
-freqs = linspace(f*0.5, f*6, numfreqs);
+freqs = linspace(f*0.1, f*6, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
@@ -24,6 +24,7 @@ sim = Simulation(lensmodel, freqs, f);
 
 designer = PhilDesigner(lensmodel, sim);
 
+%designer.DesignDielectricGrinDiscretizeZ(total_thickness / 11);
 designer.DesignDielectricGrin();
 
 %% 
@@ -47,12 +48,6 @@ sim.propagate(focal_length);
 
 [r, d, o, strehl_ratio] = sim.CalcLoss();
 
-%%
-
-plot(freqs, strehl_ratio, freqs, r, freqs, d, freqs, o);
-
-legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
-ylim([0,1]);
 
 %%
 
@@ -65,3 +60,10 @@ colorbar;
 phase = angle(lensmodel.S_array(:,:,40));
 imagesc(lensmodel.xvec, lensmodel.yvec, phase);
 colorbar;
+
+%%
+
+plot(freqs, strehl_ratio, freqs, r, freqs, d, freqs, o);
+
+legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
+ylim([0,1]);
