@@ -131,6 +131,22 @@ classdef PhilDesigner
 
             out = TL;
         end
+        
+        % size is the size of meta-atom grid squares. epsr is the is
+        % the relative permittivity of the 
+        function out = GetIndexFromSpacing(obj, size, epsr, s, alpha, beta)
+            g = obj.lens_model.grid_dimension;
+            a = g - size; % the space between squares assuming constant size
+            
+            lambda = Constants.c/obj.sim.designfrequency;
+            % capacitance of the meta-atom square
+            C = (epsr * 4 * g / (2 * pi * Constants.c * Constants.Z0)) * ln(csc(a*pi / (2*g)));
+
+            Zeff = sqrt( Constants.mu_0 / (Constants.eps_0 * epsr + (alpha * C / (s + (beta * lambda * ...
+                a / g)))));
+
+            out = Constants.Z0 / Zeff;
+        end
     end
 end
 
