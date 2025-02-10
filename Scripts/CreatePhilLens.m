@@ -1,7 +1,7 @@
 
 f = 9e9; % 480GHz central frequency
-numfreqs=201;
-freqs = linspace(f*0.1, f*6, numfreqs);
+numfreqs=50;
+freqs = linspace(f*0.2, f*2, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
@@ -51,7 +51,7 @@ sim.propagate(focal_length);
 
 %%
 
-passivity = sqrt(abs(lensmodel.S_array(:,:,100)).^2 + abs(lensmodel.S11_array(:,:,100).^2));
+passivity = sqrt(abs(lensmodel.S_array(:,:,round(numfreqs/2))).^2 + abs(lensmodel.S11_array(:,:,round(numfreqs/2)).^2));
 
 imagesc(lensmodel.xvec, lensmodel.yvec, passivity);
 colorbar;

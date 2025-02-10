@@ -43,7 +43,7 @@ classdef PhilDesigner
 
             for i=1:length(radii)
                 if (mod(i,10) == 0)
-                    disp(i);
+                    disp(num2str(i) + "/" + num2str(length(radii)));
                 end
                 if (layer_thickness == 0)
                     TL_collection(i) = obj.DesignDielectricGrinTL(radii(i));
