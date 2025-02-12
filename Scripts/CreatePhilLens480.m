@@ -1,19 +1,13 @@
 
 f = 480e9; % 480GHz central frequency
 numfreqs=50;
-freqs = linspace(f*0.2, f*2, numfreqs);
+freqs = linspace(f*0.4, f*2, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
 g=lambda/5; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 
-% total_thickness = 0.3; %16mm total thickness
-% 
-% % diameter of active lens area and structural lens area, respectively
-% diameter = 11.25;
-% struct_diam = 11.25;
-% 
-% focal_length = 15;
+
 
 total_thickness = 2.5; %16mm total thickness
 
@@ -22,6 +16,14 @@ diameter = 130;
 struct_diam = 130;
 
 focal_length = 150;
+
+total_thickness = 0.3; %16mm total thickness
+
+% diameter of active lens area and structural lens area, respectively
+diameter = 11.25;
+struct_diam = 11.25;
+
+focal_length = 15;
 
 % 0 is used as a placerholder for the prototype TL in this lens, since each
 % TL has a different prototype
@@ -36,7 +38,11 @@ designer = PhilDesigner(lensmodel, sim);
 
 %%
 %designer.DesignDielectricGrinDiscretizeZ(total_thickness / 11);
-designer.DesignDielectricGrin();
+designer.DesignDielectricGrinDiscretizeZ(total_thickness / 14);
+
+%JANKY. CALCULATES THE STREHL RATIO AT 143 FOCAL LENGTH RATHER THAN 150
+%NOMINAL
+%lensmodel.focal_length = 143;
 
 %% 
 
@@ -53,7 +59,7 @@ sim.initialize_E_field(efield);
 sim.lensTransform();
 
 % propagate
-scan_z = focal_length*linspace(0.8,1.1,100);
+scan_z = focal_length*linspace(0.0,1.1,100);
 
 sim.propagate(scan_z);
 E_save = sim.E_saved;
@@ -83,6 +89,17 @@ plot(freqs, strehl_ratio, freqs, r, freqs, d, freqs, o);
 
 legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
 ylim([0,1]);
+title("Strehl Ratio of Broadband Lens Design");
+
+%%
+
+plot(freqs/1e9, strehl_ratio);
+
+%legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
+ylim([0,1]);
+title("Strehl Ratio of Simulated Broadband 480 GHz Lens Design");
+xlabel("Frequency (GHz)");
+ylabel("Strehl Ratio (dimensionless)");
 
 %%
 
@@ -92,3 +109,36 @@ E_plot = squeeze(E_save(round(E_size(1)/2),:,:));
 imagesc(scan_z, sim2.xvec, mag2db(abs(E_plot)));
 colorbar;
 clim([-35, max(mag2db(abs(E_plot)), [], "all")]);
+
+%%
+hold off;
+rectangle('Position', [-diameter/2, -total_thickness/2, diameter, total_thickness], 'FaceColor',[1,1,0]);
+radius = linspace(0, diameter/2, 100);
+[n_of_r, t_of_r, ar_thick] = designer.DesignIdealDielectric(radius); 
+hold on;
+plot(radius, t_of_r/2, 'r--', -radius, t_of_r/2, 'r--',radius, -t_of_r/2,'r--', -radius, -t_of_r/2,'r--');
+
+pattern_dims = [7, 5];
+thickness = 0.005;
+
+for i = 1:(pattern_dims(1))
+    for j = 1:(pattern_dims(2))
+        r = (j-0.5) * diameter/2 / (pattern_dims(2));
+        
+        h = (i-0.5) * total_thickness/2 / (pattern_dims(1));
+        [n_of_r, t_of_r, ar_thick] = designer.DesignIdealDielectric(r);
+        if h > t_of_r/2
+            n = sqrt(n_of_r);
+        else
+            n = n_of_r;
+        end
+        n = n/50;
+        width = n*7.5;
+        rectangle('Position',[r-width/2, h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
+        rectangle('Position',[-r-width/2, h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
+        rectangle('Position',[r-width/2, -h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
+        rectangle('Position',[-r-width/2, -h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
+    end
+end
+
+axis off;
