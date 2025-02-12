@@ -74,15 +74,15 @@ classdef PhilDesigner
             
             r = dist; %radius in millimeters
             
-            b = (lamb_x^2/(4.*t_tot^2)) + 2*(n0*t0 - r^2/(2*f))/t_tot; %coefficient
+            b = (lamb_x.^2/(4.*t_tot^2)) + 2*(n0.*t0 - r.^2/(2*f))./t_tot; %coefficient
             
-            c = ((n0*t0 - r^2/(2*f))/t_tot)^2; % coefficient
+            c = ((n0.*t0 - r.^2/(2*f))./t_tot).^2; % coefficient
             
-            n_of_r = (b + sqrt(b^2 - 4.*c))/2.; % value of high index material as a function of radius
+            n_of_r = (b + sqrt(b.^2 - 4.*c))/2.; % value of high index material as a function of radius
             
-            t_of_r = (n0*t0 - r^2/(2*f))/n_of_r; % thickness of high index material as a function of radius
+            t_of_r = (n0.*t0 - r.^2/(2*f))./n_of_r; % thickness of high index material as a function of radius
             
-            phase = 180.*(t_tot - t_of_r)*sqrt(n_of_r)/lamb_x; % phase of AR coating (should be 90 degrees)
+            phase = 180.*(t_tot - t_of_r).*sqrt(n_of_r)/lamb_x; % phase of AR coating (should be 90 degrees)
             
             ar_thick = (t_tot - t_of_r)/2; % thickness of AR coating as a function of radius (index is the square root of the high index part)
             
