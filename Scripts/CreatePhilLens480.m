@@ -38,11 +38,9 @@ designer = PhilDesigner(lensmodel, sim);
 
 %%
 %designer.DesignDielectricGrinDiscretizeZ(total_thickness / 11);
-designer.DesignDielectricGrinDiscretizeZ(total_thickness / 14);
+%designer.DesignDielectricGrinDiscretizeZ(total_thickness / 14);
+designer.DesignDielectricGrin();
 
-%JANKY. CALCULATES THE STREHL RATIO AT 143 FOCAL LENGTH RATHER THAN 150
-%NOMINAL
-%lensmodel.focal_length = 143;
 
 %% 
 
@@ -68,7 +66,7 @@ E_save = sim.E_saved;
 
 sim2 = Simulation(lensmodel, freqs, f);
 lensmodel.CalcSParam(freqs);
-[r, d, o, strehl_ratio] = sim2.CalcLoss();
+[ref, d, o, strehl_ratio] = sim2.CalcLoss();
 
 
 %%
@@ -85,7 +83,7 @@ colorbar;
 
 %%
 
-plot(freqs, strehl_ratio, freqs, r, freqs, d, freqs, o);
+plot(freqs, strehl_ratio, freqs, ref, freqs, d, freqs, o);
 
 legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
 ylim([0,1]);
@@ -116,7 +114,7 @@ rectangle('Position', [-diameter/2, -total_thickness/2, diameter, total_thicknes
 radius = linspace(0, diameter/2, 100);
 [n_of_r, t_of_r, ar_thick] = designer.DesignIdealDielectric(radius); 
 hold on;
-plot(radius, t_of_r/2, 'r--', -radius, t_of_r/2, 'r--',radius, -t_of_r/2,'r--', -radius, -t_of_r/2,'r--');
+plot(radius, t_of_r/2, 'r--', -radius, t_of_r/2, 'r--',radius, -t_of_r/2,'r--', -radius, -t_of_r/2,'r--', "LineWidth", 3);
 
 pattern_dims = [7, 5];
 thickness = 0.005;
@@ -134,10 +132,10 @@ for i = 1:(pattern_dims(1))
         end
         n = n/50;
         width = n*7.5;
-        rectangle('Position',[r-width/2, h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
-        rectangle('Position',[-r-width/2, h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
-        rectangle('Position',[r-width/2, -h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
-        rectangle('Position',[-r-width/2, -h-thickness/2, width, thickness], 'FaceColor',[1,1,1]);
+        rectangle('Position',[r-width/2, h-thickness/2, width, thickness], 'FaceColor',[0.5,0.5,0.5]);
+        rectangle('Position',[-r-width/2, h-thickness/2, width, thickness], 'FaceColor',[0.5,0.5,0.5]);
+        rectangle('Position',[r-width/2, -h-thickness/2, width, thickness], 'FaceColor',[0.5,0.5,0.5]);
+        rectangle('Position',[-r-width/2, -h-thickness/2, width, thickness], 'FaceColor',[0.5,0.5,0.5]);
     end
 end
 

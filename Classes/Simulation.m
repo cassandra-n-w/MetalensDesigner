@@ -109,6 +109,14 @@ classdef Simulation < handle
             r = sqrt(obj.x.^2 + obj.y.^2);
             mag = r < (obj.lens_model.diameter/2);
             
+            Rz = obj.calc_phase_radius_of_curvature();
+
+            phasetrans = exp(+1.0i * pi * r.^2 / (lambda * Rz));
+            phasepattern = mag .* phasetrans;
+        end
+
+        function Rz = calc_phase_radius_of_curvature(obj)
+            lambda = Constants.c / (obj.designfrequency);
             w0 = obj.calc_waist(); % presumed beam waist of receiver in mm
 
             zr = pi * w0^2 / lambda; %confocal distance
@@ -116,9 +124,6 @@ classdef Simulation < handle
             zf = obj.lens_model.focal_length; % focal distance of lens
 
             Rz = zf * (1 + (zr/zf)^2); %beam radius of curvature at focal distance
-
-            phasetrans = exp(+1.0i * pi * r.^2 / (lambda * Rz));
-            phasepattern = mag .* phasetrans;
         end
         
         function waist = calc_waist(obj)

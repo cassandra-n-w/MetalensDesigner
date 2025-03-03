@@ -69,18 +69,20 @@ classdef PhilDesigner
             lamb_x = Constants.c/obj.sim.designfrequency; % X-band (9 GHz) wavelength in mm
             
             f = obj.lens_model.focal_length; % focal length in millimeters
+
+            Rz = obj.sim.calc_phase_radius_of_curvature();
             
             t0 = t_tot - 2.*lamb_x/(4. * sqrt(n0)); % Thickness of the high index region in the center of the lens
             
             r = dist; %radius in millimeters
             
-            b = (lamb_x.^2/(4.*t_tot^2)) + 2*(n0.*t0 - r.^2/(2*f))./t_tot; %coefficient
+            b = (lamb_x.^2/(4.*t_tot^2)) + 2*(n0.*t0 - r.^2/(2*Rz))./t_tot; %coefficient
             
-            c = ((n0.*t0 - r.^2/(2*f))./t_tot).^2; % coefficient
+            c = ((n0.*t0 - r.^2/(2*Rz))./t_tot).^2; % coefficient
             
             n_of_r = (b + sqrt(b.^2 - 4.*c))/2.; % value of high index material as a function of radius
             
-            t_of_r = (n0.*t0 - r.^2/(2*f))./n_of_r; % thickness of high index material as a function of radius
+            t_of_r = (n0.*t0 - r.^2/(2*Rz))./n_of_r; % thickness of high index material as a function of radius
             
             phase = 180.*(t_tot - t_of_r).*sqrt(n_of_r)/lamb_x; % phase of AR coating (should be 90 degrees)
             
