@@ -37,6 +37,7 @@ classdef PhilDesigner
             
             dr = obj.lens_model.grid_dimension / 4;
             radii = 0:dr:(obj.lens_model.diameter/2);
+            pathlength = obj.FindIdealPathLength(radii);
 
             default_tl = TL_1Param(0,0);
             TL_collection = createArray([length(radii),1], FillValue=default_tl);
@@ -46,9 +47,9 @@ classdef PhilDesigner
                     disp(num2str(i) + "/" + num2str(length(radii)));
                 end
                 if (layer_thickness == 0)
-                    TL_collection(i) = obj.DesignDielectricGrinTL(radii(i));
+                    TL_collection(i) = obj.DesignDielectricGrinTL(pathlength(i));
                 else
-                    TL_collection(i) = obj.DesignDielectricGrinTLDiscretize(radii(i), layer_thickness);
+                    TL_collection(i) = obj.DesignDielectricGrinTLDiscretize(pathlength(i), layer_thickness);
                 end
             end
 
@@ -59,9 +60,42 @@ classdef PhilDesigner
             obj.DesignDielectricGrinGeneral(layer_thickness);
         end
 
+        function pathlength = FindIdealPathLength(obj, r)
+            lamb_x = Constants.c/obj.sim.designfrequency;
+            f = obj.sim.designfrequency;
+            phasesim = Simulation(obj.lens_model, f, f);
+            phasegrid = angle(phasesim.calc_ideal_phase());
+            rgrid = sqrt(phasesim.x.^2 + phasesim.y.^2);
+            rinterp = rgrid(round(phasesim.dims(1)/2), 1:round(phasesim.dims(2)/2));
+            phaseinterp = phasegrid(round(phasesim.dims(1)/2), 1:round(phasesim.dims(2)/2));
+            phaseinterp = unwrap(phaseinterp);
+
+            phaser = interp1(rinterp, phaseinterp, r, 'spline');
+            phase0 = interp1(rinterp, phaseinterp, 0, 'spline');
+
+            pathlength = lamb_x * phaser / (2*pi);
+            pathlength0 = lamb_x * phase0 / (2*pi);
+            pathlength = pathlength - pathlength0;
+        end
+
+        function pathlength = FindNaivePathLength(obj, r)
+            Rz = obj.sim.calc_phase_radius_of_curvature();
+            pathlength = r.^2 / (2*Rz);
+        end
+
+        function r = idealCurvature(obj)
+            dr = obj.lens_model.grid_dimension / 4;
+            radii = -(obj.lens_model.diameter/2):dr:(obj.lens_model.diameter/2);
+
+            pathlength = obj.FindIdealPathLength(abs(radii));
+
+            p = polyfit(radii, pathlength, 2);
+            r = 1/(2*p(1));
+        end
+
 
         %% returns the index of the center part, thickness of the center part, and thickness of the AR coating part 
-        function [n_of_r, t_of_r, ar_thick] = DesignIdealDielectric(obj, dist)
+        function [n_of_r, t_of_r, ar_thick] = DesignIdealDielectric(obj, pathlength)
             t_tot = obj.total_thickness;
             
             n0 = 7; % maximum index of refraction for the lens
@@ -70,19 +104,23 @@ classdef PhilDesigner
             
             f = obj.lens_model.focal_length; % focal length in millimeters
 
-            Rz = obj.sim.calc_phase_radius_of_curvature();
-            
+            % Rz = obj.sim.calc_phase_radius_of_curvature();
+
+            % pathlength = r.^2/(2*Rz); % naive
+            % pathlength = r.^2/(2*obj.idealCurvature()); % quadratic fit
+            % pathlength = obj.FindIdealPathLength(dist);
+
             t0 = t_tot - 2.*lamb_x/(4. * sqrt(n0)); % Thickness of the high index region in the center of the lens
             
-            r = dist; %radius in millimeters
+            %r = dist; %radius in millimeters
             
-            b = (lamb_x.^2/(4.*t_tot^2)) + 2*(n0.*t0 - r.^2/(2*Rz))./t_tot; %coefficient
+            b = (lamb_x.^2/(4.*t_tot^2)) + 2*(n0.*t0 - pathlength)./t_tot; %coefficient
             
-            c = ((n0.*t0 - r.^2/(2*Rz))./t_tot).^2; % coefficient
+            c = ((n0.*t0 - pathlength)./t_tot).^2; % coefficient
             
             n_of_r = (b + sqrt(b.^2 - 4.*c))/2.; % value of high index material as a function of radius
             
-            t_of_r = (n0.*t0 - r.^2/(2*Rz))./n_of_r; % thickness of high index material as a function of radius
+            t_of_r = (n0.*t0 - pathlength)./n_of_r; % thickness of high index material as a function of radius
             
             phase = 180.*(t_tot - t_of_r).*sqrt(n_of_r)/lamb_x; % phase of AR coating (should be 90 degrees)
             
@@ -91,11 +129,11 @@ classdef PhilDesigner
             n_thick = t_of_r; % thickness of the high index part again
         end
 
-        function out = DesignDielectricGrinTL(obj, dist)
+        function out = DesignDielectricGrinTL(obj, pathlength)
             %DesignDielectricGrinTL Given a dist from the lens center,
             %design a single dielectric grin TL
 
-            [n_of_r, n_thick, ar_thick] = obj.DesignIdealDielectric(dist);
+            [n_of_r, n_thick, ar_thick] = obj.DesignIdealDielectric(pathlength);
 
             inner_dielectric = Dielectric(n_of_r.^2, 0, obj.sim.frequency, n_thick./1.2, n_thick.*1.2);
 
@@ -109,11 +147,11 @@ classdef PhilDesigner
             out = TL;
         end
 
-        function out = DesignDielectricGrinTLDiscretize(obj, dist, layer_thickness)
+        function out = DesignDielectricGrinTLDiscretize(obj, pathlength, layer_thickness)
             %DesignDielectricGrinTL Given a dist from the lens center,
             %design a single dielectric grin TL
 
-            [n_of_r, n_thick, ar_thick] = obj.DesignIdealDielectric(dist);
+            [n_of_r, n_thick, ar_thick] = obj.DesignIdealDielectric(pathlength);
 
             ar_thick = layer_thickness * (round(ar_thick/layer_thickness));
             n_thick = obj.total_thickness - 2*ar_thick;

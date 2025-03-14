@@ -41,6 +41,21 @@ designer = PhilDesigner(lensmodel, sim);
 %designer.DesignDielectricGrinDiscretizeZ(total_thickness / 14);
 designer.DesignDielectricGrin();
 
+%%
+% test path length algorithms
+dr = lambda/20;
+r = 0:dr:(lensmodel.diameter/2);
+
+pathNaive = designer.FindNaivePathLength(r);
+pathIdeal = designer.FindIdealPathLength(r);
+
+Rz = designer.idealCurvature();
+
+plot(r, pathNaive, r, pathIdeal, r, r.^2/(2*Rz));
+
+legend(["Naive","Ideal","Curvature"]);
+
+% plots suggest not perfectly quadratic
 
 %% 
 
@@ -57,7 +72,7 @@ sim.initialize_E_field(efield);
 sim.lensTransform();
 
 % propagate
-scan_z = focal_length*linspace(0.0,1.1,100);
+scan_z = focal_length*linspace(0.8,1.2,100);
 
 sim.propagate(scan_z);
 E_save = sim.E_saved;
@@ -82,12 +97,14 @@ imagesc(lensmodel.xvec, lensmodel.yvec, phase);
 colorbar;
 
 %%
-
-plot(freqs, strehl_ratio, freqs, ref, freqs, d, freqs, o);
+gfreqs = freqs/1e9;
+plot(gfreqs, strehl_ratio, gfreqs, ref, gfreqs, d, gfreqs, o);
 
 legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
 ylim([0,1]);
 title("Strehl Ratio of Broadband Lens Design");
+xlabel("Frequency (GHz)");
+ylabel("Efficiency (unitless)");
 
 %%
 
@@ -106,7 +123,14 @@ E_plot = squeeze(E_save(round(E_size(1)/2),:,:));
 
 imagesc(scan_z, sim2.xvec, mag2db(abs(E_plot)));
 colorbar;
-clim([-35, max(mag2db(abs(E_plot)), [], "all")]);
+max_sig = max(mag2db(abs(E_plot)), [], "all");
+clim([max_sig - 13, max_sig]);
+
+%%
+
+imagesc(scan_z, sim2.xvec, angle(E_plot));
+clim("auto");
+
 
 %%
 hold off;
