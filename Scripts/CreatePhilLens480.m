@@ -38,7 +38,7 @@ designer = PhilDesigner(lensmodel, sim);
 
 %%
 %designer.DesignDielectricGrinDiscretizeZ(total_thickness / 11);
-designer.DesignDielectricGrinDiscretizeZ(total_thickness / 100);
+designer.DesignDielectricGrinDiscretizeZ(total_thickness / 15);
 %designer.DesignDielectricGrin();
 
 %%
@@ -133,13 +133,13 @@ clim("auto");
 
 
 %%
-hold off;
+clf;
+hold on;
 rectangle('Position', [-diameter/2, -total_thickness/2, diameter, total_thickness], 'FaceColor',[1,1,0]);
 radius = linspace(0, diameter/2, 100);
-[n_of_r, t_of_r, ar_thick] = designer.DesignIdealDielectric(radius); 
-hold on;
+pathlength = designer.PathLengthInterp(radius);
+[n_of_r, t_of_r, ar_thick] = designer.DesignIdealDielectric(pathlength); 
 plot(radius, t_of_r/2, 'r--', -radius, t_of_r/2, 'r--',radius, -t_of_r/2,'r--', -radius, -t_of_r/2,'r--', "LineWidth", 3);
-
 pattern_dims = [7, 5];
 thickness = 0.005;
 
@@ -148,7 +148,8 @@ for i = 1:(pattern_dims(1))
         r = (j-0.5) * diameter/2 / (pattern_dims(2));
         
         h = (i-0.5) * total_thickness/2 / (pattern_dims(1));
-        [n_of_r, t_of_r, ar_thick] = designer.DesignIdealDielectric(r);
+        pathlength = designer.PathLengthInterp(r);
+        [n_of_r, t_of_r, ar_thick] = designer.DesignIdealDielectric(pathlength);
         if h > t_of_r/2
             n = sqrt(n_of_r);
         else
@@ -164,3 +165,4 @@ for i = 1:(pattern_dims(1))
 end
 
 axis off;
+hold off;
