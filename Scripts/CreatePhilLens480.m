@@ -17,13 +17,13 @@ struct_diam = 130;
 
 focal_length = 150;
 
-total_thickness = 0.3; %16mm total thickness
-
-% diameter of active lens area and structural lens area, respectively
-diameter = 11.25;
-struct_diam = 11.25;
-
-focal_length = 15;
+% total_thickness = 0.3; %16mm total thickness
+% 
+% % diameter of active lens area and structural lens area, respectively
+% diameter = 11.25;
+% struct_diam = 11.25;
+% 
+% focal_length = 15;
 
 % 0 is used as a placerholder for the prototype TL in this lens, since each
 % TL has a different prototype
@@ -38,8 +38,8 @@ designer = PhilDesigner(lensmodel, sim);
 
 %%
 %designer.DesignDielectricGrinDiscretizeZ(total_thickness / 11);
-%designer.DesignDielectricGrinDiscretizeZ(total_thickness / 14);
-designer.DesignDielectricGrin();
+designer.DesignDielectricGrinDiscretizeZ(total_thickness / 100);
+%designer.DesignDielectricGrin();
 
 %%
 % test path length algorithms
@@ -124,7 +124,7 @@ E_plot = squeeze(E_save(round(E_size(1)/2),:,:));
 imagesc(scan_z, sim2.xvec, mag2db(abs(E_plot)));
 colorbar;
 max_sig = max(mag2db(abs(E_plot)), [], "all");
-clim([max_sig - 13, max_sig]);
+clim([max_sig - 18, max_sig]);
 
 %%
 

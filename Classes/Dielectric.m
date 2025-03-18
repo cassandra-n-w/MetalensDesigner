@@ -37,56 +37,56 @@ classdef Dielectric < TwoPort_1Param
             obj.Min = minsize;
             obj.Max = maxsize;
             
-            %Z0 = 376.730314; % ohms; impedance of free space
-            obj.unit = logspace(log10(minsize), log10(maxsize), log10(maxsize/minsize) * 1000); % in mm; unit calculation length is 1um
-            %c = 299792458000; % speed of light (mm/s);
-            
-            
-             
-            % calculate abcd matrices
-            abcd_matrix = zeros(2,2,numel(freqs),numel(obj.unit));
-
-            % convert things into matrices for vectorization
-            epsr_m = reshape(epsr, 1, 1, []);
-            freqs_m = reshape(freqs, 1, 1, []);
-            unit_m = reshape(obj.unit, 1, 1, 1, []);
-
-            s_matrix = zeros(2,2,length(freqs_m), length(unit_m));
-            
-            % note: this is probably reliant on good dielectric
-            % approximation. can possibly be extended to include all
-            % mu = 1.0 materials
-            k = sqrt(epsr_m) .* 2.*pi.*freqs_m./Constants.c;
-            beta = k;
-            alpha = k .* tand / 2;
-            gamma = alpha + 1.0i * beta;
-            prop = exp(-gamma .* unit_m);
-            
-            s_matrix(2,1,:,:) = prop;
-            s_matrix(1,2,:,:) = prop;
-            %s_matrix(4,3,:) = prop;
-            %s_matrix(3,4,:) = prop;
-            
-            %s_matrix = [0 prop(i) 0 0; prop(i) 0 0 0; 0 0 0 prop(i); 0 0 prop(i) 0];
-            impedance = ones(size(unit_m)) .* Constants.Z0 ./ sqrt(epsr_m);
-
-            s_matrix_flat = reshape(s_matrix, 2, 2, length(unit_m) * length(freqs_m));
-            impedance_flat = reshape(impedance, 1, 1, length(unit_m) * length(freqs_m));
-            
-            abcd = s2abcd(s_matrix_flat, impedance_flat);
-
-            % create a new S parameter matrix normalized to vacuum
-            % characteristic impedance
-            obj.impedance = impedance_flat(1);
-            s_matrix_vacuum = s2s(s_matrix_flat, impedance_flat, obj.impedance);
-            
-            s_matrix_vacuum = reshape(s_matrix_vacuum, 2, 2, length(freqs_m), length(unit_m));
-                
-            abcd_matrix = reshape(abcd, 2, 2, length(freqs_m), length(unit_m));
-            %abcd_matrix = [cosh(gamma .* unit_m), impedance.*sinh(gamma .* unit_m); sinh(gamma .* unit_m)./impedance, cosh(gamma .* unit_m)];
-
-            obj.abcd_grid = griddedInterpolant({1:2, 1:2, obj.freqs, obj.unit}, abcd_matrix, 'linear', 'none');
-            obj.s_grid = griddedInterpolant({1:2,1:2, obj.freqs, obj.unit}, s_matrix_vacuum, 'linear', 'none');
+            % %Z0 = 376.730314; % ohms; impedance of free space
+            % obj.unit = logspace(log10(minsize), log10(maxsize), log10(maxsize/minsize) * 1000); % in mm; unit calculation length is 1um
+            % %c = 299792458000; % speed of light (mm/s);
+            % 
+            % 
+            % 
+            % % calculate abcd matrices
+            % abcd_matrix = zeros(2,2,numel(freqs),numel(obj.unit));
+            % 
+            % % convert things into matrices for vectorization
+            % epsr_m = reshape(epsr, 1, 1, []);
+            % freqs_m = reshape(freqs, 1, 1, []);
+            % unit_m = reshape(obj.unit, 1, 1, 1, []);
+            % 
+            % s_matrix = zeros(2,2,length(freqs_m), length(unit_m));
+            % 
+            % % note: this is probably reliant on good dielectric
+            % % approximation. can possibly be extended to include all
+            % % mu = 1.0 materials
+            % k = sqrt(epsr_m) .* 2.*pi.*freqs_m./Constants.c;
+            % beta = k;
+            % alpha = k .* tand / 2;
+            % gamma = alpha + 1.0i * beta;
+            % prop = exp(-gamma .* unit_m);
+            % 
+            % s_matrix(2,1,:,:) = prop;
+            % s_matrix(1,2,:,:) = prop;
+            % %s_matrix(4,3,:) = prop;
+            % %s_matrix(3,4,:) = prop;
+            % 
+            % %s_matrix = [0 prop(i) 0 0; prop(i) 0 0 0; 0 0 0 prop(i); 0 0 prop(i) 0];
+            % impedance = ones(size(unit_m)) .* Constants.Z0 ./ sqrt(epsr_m);
+            % 
+            % s_matrix_flat = reshape(s_matrix, 2, 2, length(unit_m) * length(freqs_m));
+            % impedance_flat = reshape(impedance, 1, 1, length(unit_m) * length(freqs_m));
+            % 
+            % abcd = s2abcd(s_matrix_flat, impedance_flat);
+            % 
+            % % create a new S parameter matrix normalized to vacuum
+            % % characteristic impedance
+            % obj.impedance = impedance_flat(1);
+            % s_matrix_vacuum = s2s(s_matrix_flat, impedance_flat, obj.impedance);
+            % 
+            % s_matrix_vacuum = reshape(s_matrix_vacuum, 2, 2, length(freqs_m), length(unit_m));
+            % 
+            % abcd_matrix = reshape(abcd, 2, 2, length(freqs_m), length(unit_m));
+            % %abcd_matrix = [cosh(gamma .* unit_m), impedance.*sinh(gamma .* unit_m); sinh(gamma .* unit_m)./impedance, cosh(gamma .* unit_m)];
+            % 
+            % obj.abcd_grid = griddedInterpolant({1:2, 1:2, obj.freqs, obj.unit}, abcd_matrix, 'linear', 'none');
+            % obj.s_grid = griddedInterpolant({1:2,1:2, obj.freqs, obj.unit}, s_matrix_vacuum, 'linear', 'none');
         end
 
         function out = abcd_interp(obj, freq, lengths)
@@ -136,7 +136,7 @@ classdef Dielectric < TwoPort_1Param
             % create a new S parameter matrix normalized to vacuum
             % characteristic impedance
             impedance = impedance_flat(1);
-            s = s2s(s_matrix_flat, impedance_flat, obj.impedance);
+            s = s2s(s_matrix_flat, impedance_flat, impedance);
         end
     end
 end
