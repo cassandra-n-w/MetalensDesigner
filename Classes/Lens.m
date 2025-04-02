@@ -275,7 +275,7 @@ classdef Lens < handle
 
                 for i = 1:length(obj.TL_collection)
                     if (mod(i,10) == 0)
-                        disp(i);
+                        disp(num2str(i) + "/" + num2str(length(obj.TL_collection)));
                     end
                     thisTL = obj.TL_collection(i);
                     obj.S_collection(:,:,:,i) = thisTL.SParamModify(frequency, obj.thickness_mult);    

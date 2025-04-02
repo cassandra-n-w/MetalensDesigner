@@ -25,7 +25,7 @@ classdef PhilDesigner < handle
             obj.DesignDielectricGrinGeneral(0);
         end
 
-        function DesignDielectricGrinGeneral(obj, layer_thickness)
+        function DesignDielectricGrinGeneral(obj, layer_count)
             %METHOD1 Design lens using GRIN equation
             %   Assumes ideal varying dielectric (not realistic)
             
@@ -46,6 +46,19 @@ classdef PhilDesigner < handle
             default_tl = TL_1Param(0,0);
             TL_collection = createArray([length(radii),1], FillValue=default_tl);
 
+            if isscalar(layer_count)
+                layer_thickness = (obj.total_thickness / layer_count) * (1:layer_count);
+            elseif length(layer_count) == 2
+                % treat first number as matching zone layer count, second
+                % number as phase zone layer count
+                matching_count = layer_count(1);
+                phase_count = layer_count(2);
+                [~, ~, matching_zone_thickness, ~] = obj.DesignIdealDielectric(pathlength(end));
+                layer_thickness = (matching_zone_thickness / matching_count) * (1:matching_count);
+                phase_thickness = obj.total_thickness - 2*matching_zone_thickness;
+                layer_thickness = [layer_thickness linspace(matching_zone_thickness + phase_thickness/phase_count, matching_zone_thickness + phase_thickness, phase_count)];
+            end
+
             for i=1:length(radii)
                 if (mod(i,10) == 0)
                     disp(num2str(i) + "/" + num2str(length(radii)));
@@ -60,8 +73,8 @@ classdef PhilDesigner < handle
             obj.lens_model.SetRadialDesign(TL_collection, radii);
         end
 
-        function DesignDielectricGrinDiscretizeZ(obj, layer_thickness)
-            obj.DesignDielectricGrinGeneral(layer_thickness);
+        function DesignDielectricGrinDiscretizeZ(obj, layer_count)
+            obj.DesignDielectricGrinGeneral(layer_count);
         end
 
         function pathlength = FindIdealPathLength(obj, r)
@@ -171,7 +184,9 @@ classdef PhilDesigner < handle
 
             pathlength_central = n_thick .* n_of_r;
 
-            ar_thick = layer_thickness * (max(round(ar_thick/layer_thickness), 1));
+            % round to nearest layer thicknesses
+            [error, roundindex] = min(abs(ar_thick - layer_thickness));
+            ar_thick = layer_thickness(roundindex);
             n_thick = obj.total_thickness - 2*ar_thick;            
 
             assert(n_thick >= 0);
@@ -189,7 +204,7 @@ classdef PhilDesigner < handle
 
             % note we use n_inner as the AR dielectric because epsilson_ar is the
             % the square of n_ar, but n_ar is the square root of n_inner
-            ar_dielectric = Dielectric(n_ar, 0, obj.sim.frequency, ar_thick./1.2, ar_thick.*1.2);
+            ar_dielectric = Dielectric(n_ar.^2, 0, obj.sim.frequency, ar_thick./1.2, ar_thick.*1.2);
     
             proto = ProtoTL_1Param([ar_dielectric, inner_dielectric, ar_dielectric]);
             TL = TL_1Param([ar_thick, n_thick, ar_thick], proto);
@@ -198,19 +213,19 @@ classdef PhilDesigner < handle
         end
         
         % size is the size of meta-atom grid squares. epsr is the is
-        % the relative permittivity of the 
+        % the relative permittivity of the actual bulk dielectric
         function out = GetIndexFromSpacing(obj, size, epsr, s, alpha, beta)
             g = obj.lens_model.grid_dimension;
             a = g - size; % the space between squares assuming constant size
             
             lambda = Constants.c/obj.sim.designfrequency;
             % capacitance of the meta-atom square
-            C = (epsr * 4 * g / (2 * pi * Constants.c * Constants.Z0)) * ln(csc(a*pi / (2*g)));
+            C = (epsr * 4 * g / (2 * pi * Constants.c * Constants.Z0)) * log(csc(a*pi / (2*g)));
 
-            Zeff = sqrt( Constants.mu_0 / (Constants.eps_0 * epsr + (alpha * C / (s + (beta * lambda * ...
-                a / g)))));
+            Zeff = sqrt( Constants.mu_0 ./ (Constants.eps_0 .* epsr + (alpha .* C ./ (s + (beta * lambda * ...
+                a ./ g)))));
 
-            out = Constants.Z0 / Zeff;
+            out = Constants.Z0 ./ Zeff;
         end
     end
 end

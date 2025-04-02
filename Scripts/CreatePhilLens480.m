@@ -5,9 +5,7 @@ freqs = linspace(f*0.4, f*2, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
-g=lambda/5; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
-
-
+g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 
 total_thickness = 2.5; %16mm total thickness
 
@@ -34,15 +32,27 @@ sim = Simulation(lensmodel, freqs, f);
 
 designer = PhilDesigner(lensmodel, sim);
 
+%%
+size = g * ((0:100)/100);
 
+epsr_polyimide = 3.4;
+spacing = 0.02;
+alpha = 1.15;
+beta = 0.07;
+
+index = designer.GetIndexFromSpacing(size, epsr_polyimide, spacing, alpha, beta);
+
+plot(size, index);
 
 %%
-%designer.DesignDielectricGrinDiscretizeZ(total_thickness / 11);
-designer.DesignDielectricGrinDiscretizeZ(total_thickness / 15);
+%designer.DesignDielectricGrinDiscretizeZ(11);
+disp("Designing Lens");
+designer.DesignDielectricGrinDiscretizeZ([2 5]);
 %designer.DesignDielectricGrin();
 
 %%
 % test path length algorithms
+disp("Test Algorithms");
 dr = lambda/20;
 r = 0:dr:(lensmodel.diameter/2);
 
@@ -58,31 +68,36 @@ legend(["Naive","Ideal","Curvature"]);
 % plots suggest not perfectly quadratic
 
 %% 
-
+disp("Simulate");
 sim = Simulation(lensmodel, f, f);
+disp("Calc S Params");
 lensmodel.CalcSParam(f);
 % calculate the gaussian coupling of the lens
 
+disp("Initialize E Field");
 efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (lensmodel.diameter/2)) * exp(0);
 % initialize incoming plane wave
 sim.initialize_E_field(efield);
 
-
+disp("Lens Transform");
 % transform through ideal lens pattern
 sim.lensTransform();
 
 % propagate
-scan_z = focal_length*linspace(0.8,1.2,100);
+disp("Propagate");
+scan_z = focal_length*linspace(0.8,1.2,20);
 
 sim.propagate(scan_z);
+disp("Save field");
 E_save = sim.E_saved;
 
 %strehl_ratio = sim.StrehlRatio();
-
+disp("Calc S Params");
 sim2 = Simulation(lensmodel, freqs, f);
 lensmodel.CalcSParam(freqs);
+disp("Calc Losses");
 [ref, d, o, strehl_ratio] = sim2.CalcLoss();
-
+disp("Done Simulating");
 
 %%
 
