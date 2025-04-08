@@ -9,6 +9,11 @@ classdef PhilDesigner < handle
         n0
         rinterp
         phaseinterp
+        layer_boundaries
+        proto_tl
+
+        tl_collection
+        radii_collection
     end
     
     methods
@@ -47,34 +52,87 @@ classdef PhilDesigner < handle
             TL_collection = createArray([length(radii),1], FillValue=default_tl);
 
             if isscalar(layer_count)
-                layer_thickness = (obj.total_thickness / layer_count) * (1:layer_count);
+                layer_boundaries = (obj.total_thickness / layer_count) * (1:layer_count);
             elseif length(layer_count) == 2
                 % treat first number as matching zone layer count, second
                 % number as phase zone layer count
                 matching_count = layer_count(1);
                 phase_count = layer_count(2);
                 [~, ~, matching_zone_thickness, ~] = obj.DesignIdealDielectric(pathlength(end));
-                layer_thickness = (matching_zone_thickness / matching_count) * (1:matching_count);
+                layer_boundaries = (matching_zone_thickness / matching_count) * (1:matching_count);
                 phase_thickness = obj.total_thickness - 2*matching_zone_thickness;
-                layer_thickness = [layer_thickness linspace(matching_zone_thickness + phase_thickness/phase_count, matching_zone_thickness + phase_thickness, phase_count)];
+                layer_boundaries = [layer_boundaries linspace(matching_zone_thickness + phase_thickness/phase_count, matching_zone_thickness + phase_thickness, phase_count)];
+                layer_boundaries = [layer_boundaries layer_boundaries(end) + (matching_zone_thickness / matching_count) * (1:(matching_count - 1))];
             end
+
+            obj.layer_boundaries = layer_boundaries;
 
             for i=1:length(radii)
                 if (mod(i,10) == 0)
                     disp(num2str(i) + "/" + num2str(length(radii)));
                 end
-                if (layer_thickness == 0)
+                if (layer_boundaries == 0)
                     TL_collection(i) = obj.DesignDielectricGrinTL(pathlength(i));
                 else
-                    TL_collection(i) = obj.DesignDielectricGrinTLDiscretize(pathlength(i), layer_thickness);
+                    TL_collection(i) = obj.DesignDielectricGrinTLDiscretize(pathlength(i), layer_boundaries);
                 end
             end
-
+            obj.tl_collection = TL_collection;
+            obj.radii_collection = radii;
             obj.lens_model.SetRadialDesign(TL_collection, radii);
         end
 
         function DesignDielectricGrinDiscretizeZ(obj, layer_count)
             obj.DesignDielectricGrinGeneral(layer_count);
+        end
+
+        function ConvertDielectricTLToMetamaterial(obj, dielectric_tl, tracespace)
+            
+            % find thicknesses
+            % convert boundaries to thicknesses and locations
+            boundaries_extended = [0 obj.layer_boundaries obj.total_thickness];
+            quasi_layer_thicknesses = diff(boundaries_extended);
+            square_locations = (boundaries_extended(1:end-1) + boundaries_extended(2:end))/2;
+            locations_extended = [0 square_locations obj.total_thickness];
+            layer_thicknesses = diff(locations_extended);
+
+            unique_quasi_thicknesses = unique(quasi_layer_thicknesses);
+
+            % set up inverse square sizes
+
+            squaresize = linspace(tracespace, g-tracespace, 500);
+
+            epsr = obj.proto_tl.Dielectric.Eps_r_grid(obj.sim.designfrequency);
+            alpha = 1.15;
+            beta = 0.07;
+            
+            for j = 1:length(unique_quasi_thicknesses)
+                spacing = unique_quasi_thicknesses(j);
+                index(j, :) = designer.GetIndexFromSpacing(squaresize, epsr, spacing, alpha, beta);
+            end
+            
+            current_dielectric_index = 1;
+
+            % find square sizes
+            for i = 1:length(square_locations)
+                
+                
+
+            end
+            
+        end
+        
+        function ConvertLensToMetamaterial(obj, proto_tl, tracespace)
+            TL_collection = createArray([length(radii),1], FillValue=default_tl);
+            obj.proto_tl = proto_tl;
+
+            % convert each ideal dielectric tranmission line to a
+            % metamaterial transmission line
+            for i = 1:length(obj.radii_collection)
+                TL_collection(i) = obj.ConvertDielectricTLToMetamaterial(obj.tl_collection(i), tracespace);
+            end
+
+            obj.lens_model.SetRadialDesign(TL_collection, obj.radii_collection);
         end
 
         function pathlength = FindIdealPathLength(obj, r)
@@ -139,7 +197,7 @@ classdef PhilDesigner < handle
             % pathlength = r.^2/(2*obj.idealCurvature()); % quadratic fit
             % pathlength = obj.FindIdealPathLength(dist);
 
-            t0 = t_tot - 2.*lamb_x/(4. * sqrt(obj.n0)); % Thickness of the high index region in the center of the lens
+            t0 = t_tot - 2.*lamb_x/(4 .* sqrt(obj.n0)); % Thickness of the high index region in the center of the lens
             
             %r = dist; %radius in millimeters
             
@@ -176,7 +234,7 @@ classdef PhilDesigner < handle
             out = TL;
         end
 
-        function out = DesignDielectricGrinTLDiscretize(obj, pathlength, layer_thickness)
+        function out = DesignDielectricGrinTLDiscretize(obj, pathlength, layer_boundaries)
             %DesignDielectricGrinTL Given a dist from the lens center,
             %design a single dielectric grin TL
 
@@ -185,8 +243,8 @@ classdef PhilDesigner < handle
             pathlength_central = n_thick .* n_of_r;
 
             % round to nearest layer thicknesses
-            [error, roundindex] = min(abs(ar_thick - layer_thickness));
-            ar_thick = layer_thickness(roundindex);
+            [error, roundindex] = min(abs(ar_thick - layer_boundaries));
+            ar_thick = layer_boundaries(roundindex);
             n_thick = obj.total_thickness - 2*ar_thick;            
 
             assert(n_thick >= 0);

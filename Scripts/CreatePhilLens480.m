@@ -6,6 +6,7 @@ freqs = linspace(f*0.4, f*2, numfreqs);
 lambda = Constants.c/f;
 %gridding size
 g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
+%g=lambda*1;
 
 total_thickness = 2.5; %16mm total thickness
 
@@ -33,16 +34,16 @@ sim = Simulation(lensmodel, freqs, f);
 designer = PhilDesigner(lensmodel, sim);
 
 %%
-size = g * ((0:100)/100);
+squaresize = linspace(0, g, 500);
 
 epsr_polyimide = 3.4;
-spacing = 0.02;
+spacing = 0.2;
 alpha = 1.15;
 beta = 0.07;
 
-index = designer.GetIndexFromSpacing(size, epsr_polyimide, spacing, alpha, beta);
+index = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing, alpha, beta);
 
-plot(size, index);
+plot(squaresize/g, index);
 
 %%
 %designer.DesignDielectricGrinDiscretizeZ(11);
