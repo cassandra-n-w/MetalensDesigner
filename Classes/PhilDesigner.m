@@ -155,6 +155,9 @@ classdef PhilDesigner < handle
             TL_collection = createArray([length(obj.radii_collection),1], FillValue=default_tl);
             obj.proto_tl = proto_tl;
 
+
+            %obj.tl_collection
+
             % convert each ideal dielectric tranmission line to a
             % metamaterial transmission line
             for i = 1:length(obj.radii_collection)

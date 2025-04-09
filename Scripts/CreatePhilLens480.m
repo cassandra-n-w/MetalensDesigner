@@ -61,7 +61,7 @@ lossless_polyimide = Dielectric(3.50 * ones(size(freqs)), 0.0, freqs, 0.005, 0.0
 aluminum_metaatom = Element('..\\..\\HFSS Models\\Polyimide Wideband 3_4 200nm Aluminum g0p2 v99 touchstone');
 proto_tl = ProtoTL(aluminum_metaatom, lossless_polyimide);
 tracespace = 0.003; % 3um converted to mm.
-designer.ConvertLensToMetamaterial(proto_tl, tracespace)
+%designer.ConvertLensToMetamaterial(proto_tl, tracespace)
 
 %%
 % test path length algorithms

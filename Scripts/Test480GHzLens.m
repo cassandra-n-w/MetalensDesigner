@@ -16,12 +16,13 @@ f=480e9;
 numfreqs=31;
 freqs = linspace(f*0.88, f*1.12, numfreqs);
 el_al_thin = Element('..\\..\\HFSS Models\\Polyimide 3_4 200nm Aluminum g0p2 v99 touchstone');
+aluminum_metaatom = Element('..\\..\\HFSS Models\\Polyimide Wideband 3_4 200nm Aluminum g0p2 v99 touchstone');
 di_lossier = Dielectric(3.5 * ones(size(freqs)), 0.025, freqs, 0.005, 0.015); %layer thickness 5 - 15um, dielectric 3.5, loss tangent 0.015
-lensmodel.TL_prototype = ProtoTL(el_al_thin, di_lossier);
+lensmodel.TL_prototype = ProtoTL(aluminum_metaatom, di);
 
 %test effect of thickness being greater than expected
-thickness_mult = 1.14; %11.1 um layer thickness
-%thickness_mult = 1.0; %10 um layer thickness
+%thickness_mult = 1.14; %11.1 um layer thickness
+thickness_mult = 1.0; %10 um layer thickness
 lensmodel.SetThicknessMult(thickness_mult);
 
 
@@ -131,18 +132,19 @@ if (resim)
     total_power = trapz(asin(sinty(:,5)),trapz(asin(sintx(:,5)), farfield.*conj(farfield) ));
 end
 %% 
-hold on;
+hold off;
 % data taken directly from Alain's radiometric test.
 freq_meas = (460:5:500);
 loss_meas_dB = [2.76, 2.77, 2.73, 2.55, 2.52, 2.42, 2.38, 2.33, 2.34];
 
-[r,d,o] = sim.CalcLoss()
+[r,d,o, strehl_ratio] = sim.CalcLoss()
 
 waists = sim.FitGauss();
 
 loss = r.*d
 loss_dB = -10*log10(loss)
 
+%%
 %plot(freq_meas, loss_meas_dB, freqs/1e9, loss_dB);
 plot(freqs/1e9, loss_dB);
 legend(["Measured", "Simulated (nominal)", "Simulated (realistic)"]);
@@ -151,6 +153,16 @@ ylabel("Loss (dB)")
 title("Lens Loss: Simulated vs Measured")
 ylim([0, 3]);
 hold off;
+
+%%
+gfreqs = freqs/1e9;
+plot(gfreqs, strehl_ratio, gfreqs, r, gfreqs, d, gfreqs, o);
+
+legend(["Strehl ratio", "antireflective efficiency", "dielectric/conductive efficiency", "optical efficiency"]);
+ylim([0,1]);
+title("Strehl Ratio of Broadband Lens Design");
+xlabel("Frequency (GHz)");
+ylabel("Efficiency (unitless)");
 
 %% 
 
