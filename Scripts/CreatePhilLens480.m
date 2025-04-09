@@ -46,10 +46,22 @@ index = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing, alpha,
 plot(squaresize/g, index);
 
 %%
+
+
+%%
 %designer.DesignDielectricGrinDiscretizeZ(11);
 disp("Designing Lens");
-designer.DesignDielectricGrinDiscretizeZ([2 5]);
+designer.DesignDielectricGrinDiscretizeZ(150);
 %designer.DesignDielectricGrin();
+
+%%
+disp("Converting Lens to Metamaterial Design");
+polyimide_dielectric = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015);
+lossless_polyimide = Dielectric(3.50 * ones(size(freqs)), 0.0, freqs, 0.005, 0.015);
+aluminum_metaatom = Element('..\\..\\HFSS Models\\Polyimide Wideband 3_4 200nm Aluminum g0p2 v99 touchstone');
+proto_tl = ProtoTL(aluminum_metaatom, lossless_polyimide);
+tracespace = 0.003; % 3um converted to mm.
+designer.ConvertLensToMetamaterial(proto_tl, tracespace)
 
 %%
 % test path length algorithms
@@ -86,7 +98,7 @@ sim.lensTransform();
 
 % propagate
 disp("Propagate");
-scan_z = focal_length*linspace(0.8,1.2,20);
+scan_z = focal_length*linspace(0.0,1.3,300);
 
 sim.propagate(scan_z);
 disp("Save field");

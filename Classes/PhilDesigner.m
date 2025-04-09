@@ -86,7 +86,7 @@ classdef PhilDesigner < handle
             obj.DesignDielectricGrinGeneral(layer_count);
         end
 
-        function ConvertDielectricTLToMetamaterial(obj, dielectric_tl, tracespace)
+        function metamaterialTL = ConvertDielectricTLToMetamaterial(obj, dielectric_tl, tracespace)
             
             % find thicknesses
             % convert boundaries to thicknesses and locations
@@ -99,7 +99,7 @@ classdef PhilDesigner < handle
             unique_quasi_thicknesses = unique(quasi_layer_thicknesses);
 
             % set up inverse square sizes
-
+            g = obj.lens_model.grid_dimension;
             squaresize = linspace(tracespace, g-tracespace, 500);
 
             epsr = obj.proto_tl.Dielectric.Eps_r_grid(obj.sim.designfrequency);
@@ -108,27 +108,59 @@ classdef PhilDesigner < handle
             
             for j = 1:length(unique_quasi_thicknesses)
                 spacing = unique_quasi_thicknesses(j);
-                index(j, :) = designer.GetIndexFromSpacing(squaresize, epsr, spacing, alpha, beta);
+                index(j, :) = obj.GetIndexFromSpacing(squaresize, epsr, spacing, alpha, beta);
             end
             
             current_dielectric_index = 1;
 
+            % create list of artificial dielectric boundaries
+            for k = 1:length(dielectric_tl.my_proto_tl.TwoPortArray)
+                artificial_dielectric = dielectric_tl.my_proto_tl.TwoPortArray(k);
+                epsr_artificial_list(k) = artificial_dielectric.Eps_r_grid(obj.sim.designfrequency);
+                artificial_thickness_list(k) = dielectric_tl.sizes(k);
+            end
+
+            artificial_boundaries_list = cumsum(artificial_thickness_list);
+             
+            assert(abs(artificial_boundaries_list(end) - obj.total_thickness) < 1e-6); % demand nm accuracy
+
+            % translate list into an index for each square location
+            % kinda janky.
+            % basically, this should set an index of 1 for meta-atoms in
+            % the first artificial dielectric zone, an index of 2 for meta-atoms
+            % in the second artificial dielectric zone, etc.
+            % this could probably be vectorized but idk how.
+            metaatom_identity_index = ones(size(square_locations));
+            for k = 1:length(artificial_boundaries_list)
+                metaatom_identity_index = metaatom_identity_index + (square_locations > artificial_boundaries_list(k));
+            end
+
+            metaatom_size_list = zeros(size(square_locations));
             % find square sizes
             for i = 1:length(square_locations)
+                % find desired artificial dielectric constant
+                epsr_artificial = epsr_artificial_list(metaatom_identity_index(i));
+                quasi_thickness_index = find(quasi_layer_thicknesses(i) == unique_quasi_thicknesses,1);
+                index_artificial = sqrt(epsr_artificial);
+                metaatom_size_list(i) = interp1(index(quasi_thickness_index,:), squaresize, index_artificial, 'nearest', 'extrap');
                 
-                
-
             end
+            % need to convert to fraction of g for metaatom size
+            metamaterialTL = TL(metaatom_size_list/obj.lens_model.grid_dimension, layer_thicknesses, obj.proto_tl);
             
         end
         
         function ConvertLensToMetamaterial(obj, proto_tl, tracespace)
-            TL_collection = createArray([length(radii),1], FillValue=default_tl);
+            default_tl = TL(0,0, proto_tl);
+            TL_collection = createArray([length(obj.radii_collection),1], FillValue=default_tl);
             obj.proto_tl = proto_tl;
 
             % convert each ideal dielectric tranmission line to a
             % metamaterial transmission line
             for i = 1:length(obj.radii_collection)
+                if (mod(i,10) == 0)
+                    disp(num2str(i) + "/" + num2str(length(obj.radii_collection)));
+                end
                 TL_collection(i) = obj.ConvertDielectricTLToMetamaterial(obj.tl_collection(i), tracespace);
             end
 
