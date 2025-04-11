@@ -46,7 +46,7 @@ classdef Simulation < handle
             diam = lens_model.diameter;
 
             if nargin < 4
-                dim_mult = 2.5;
+                dim_mult = 2;
             end
             
             % set up an x-y grid with the center at 0,0

@@ -37,9 +37,9 @@ designer = PhilDesigner(lensmodel, sim);
 squaresize = linspace(0, g, 500);
 
 epsr_polyimide = 3.4;
-spacing = 0.2;
+spacing = 2.5/150;
 alpha = 1.15;
-beta = 0.07;
+beta = 0.035;
 
 index = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing, alpha, beta);
 
@@ -54,14 +54,18 @@ disp("Designing Lens");
 designer.DesignDielectricGrinDiscretizeZ(150);
 %designer.DesignDielectricGrin();
 
-%%
+%% save design's phase output for comparison purposes.
+lensmodel.CalcSParam(freqs);
+phase_ideal_design = angle(lensmodel.S_array(:,:,19));
+
+%% Convert ideal dielectric to metamaterial design
 disp("Converting Lens to Metamaterial Design");
 polyimide_dielectric = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015);
 lossless_polyimide = Dielectric(3.50 * ones(size(freqs)), 0.0, freqs, 0.005, 0.015);
 aluminum_metaatom = Element('..\\..\\HFSS Models\\Polyimide Wideband 3_4 200nm Aluminum g0p2 v99 touchstone');
 proto_tl = ProtoTL(aluminum_metaatom, lossless_polyimide);
 tracespace = 0.003; % 3um converted to mm.
-%designer.ConvertLensToMetamaterial(proto_tl, tracespace)
+designer.ConvertLensToMetamaterial(proto_tl, tracespace)
 
 %%
 % test path length algorithms
@@ -119,12 +123,33 @@ passivity = sqrt(abs(lensmodel.S_array(:,:,round(numfreqs/2))).^2 + abs(lensmode
 imagesc(lensmodel.xvec, lensmodel.yvec, passivity);
 colorbar;
 
-%%
-phase = angle(lensmodel.S_array(:,:,40));
+%% Plot phase output of lens surface (
+phase = angle(lensmodel.S_array(:,:,19));
 imagesc(lensmodel.xvec, lensmodel.yvec, phase);
 colorbar;
 
-%%
+%% 
+phase_size = size(phase);
+phase1d = (phase(phase_size(1)/2, phase_size(2)/2 : end));
+
+phase_ideal_1d = (phase_ideal_design(phase_size(1)/2, phase_size(2)/2 : end));
+
+phase_error = unwrap(phase_ideal_1d) - unwrap(phase1d);
+plotx = 1:length(phase1d);
+
+plot(plotx,rad2deg(phase1d), plotx, rad2deg(phase_ideal_1d), plotx, rad2deg(phase_error));
+
+%% Plot central metamaterial square sizes
+
+tl_collection = lensmodel.TL_collection;
+
+for i = 1:length(tl_collection)
+    squaresize(i) = tl_collection(i).sizes(75);
+end
+
+plot(squaresize);
+
+%% Plot all loss sources
 gfreqs = freqs/1e9;
 plot(gfreqs, strehl_ratio, gfreqs, ref, gfreqs, d, gfreqs, o);
 
@@ -134,7 +159,7 @@ title("Strehl Ratio of Broadband Lens Design");
 xlabel("Frequency (GHz)");
 ylabel("Efficiency (unitless)");
 
-%%
+%% Plot strehl only
 
 plot(freqs/1e9, strehl_ratio);
 
@@ -144,7 +169,7 @@ title("Strehl Ratio of Simulated Broadband 480 GHz Lens Design");
 xlabel("Frequency (GHz)");
 ylabel("Strehl Ratio (dimensionless)");
 
-%%
+%% Plot the side view of lens beam
 
 E_size = size(E_save);
 E_plot = squeeze(E_save(round(E_size(1)/2),:,:));
@@ -154,13 +179,14 @@ colorbar;
 max_sig = max(mag2db(abs(E_plot)), [], "all");
 clim([max_sig - 18, max_sig]);
 
-%%
+%% Plot the side-view of lens phase simulation
 
 imagesc(scan_z, sim2.xvec, angle(E_plot));
+ylim([-lensmodel.diameter/2, lensmodel.diameter/2]);
 clim("auto");
 
 
-%%
+%% Draw a cartoon of the lens structure
 clf;
 hold on;
 rectangle('Position', [-diameter/2, -total_thickness/2, diameter, total_thickness], 'FaceColor',[1,1,0]);
