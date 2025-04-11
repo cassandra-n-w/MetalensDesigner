@@ -142,8 +142,13 @@ classdef PhilDesigner < handle
                 epsr_artificial = epsr_artificial_list(metaatom_identity_index(i));
                 quasi_thickness_index = find(quasi_layer_thicknesses(i) == unique_quasi_thicknesses,1);
                 index_artificial = sqrt(epsr_artificial);
-                metaatom_size_list(i) = interp1(index(quasi_thickness_index,:), squaresize, index_artificial, 'nearest', 'extrap');
-                
+                metaatom_size_list(i) = interp1(index(quasi_thickness_index,:), squaresize, index_artificial, 'linear', 'extrap');
+                if metaatom_size_list(i) > (g - tracespace)
+                    metaatom_size_list(i) = (g - tracespace);
+                end
+                if metaatom_size_list(i) < tracespace
+                    metaatom_size_list(i) = tracespace;
+                end
             end
             % need to convert to fraction of g for metaatom size
             metamaterialTL = TL(metaatom_size_list/obj.lens_model.grid_dimension, layer_thicknesses, obj.proto_tl);
