@@ -14,6 +14,8 @@ classdef PhilDesigner < handle
 
         tl_collection
         radii_collection
+
+        cachedGetIndex
     end
     
     methods
@@ -86,21 +88,61 @@ classdef PhilDesigner < handle
             obj.DesignDielectricGrinGeneral(layer_count);
         end
 
-        function metamaterialTL = ConvertDielectricTLToMetamaterial(obj, dielectric_tl, tracespace)
+        function [index] = GetIndexFromPhaseSlope(obj, bgratio, quasi_layer_thickness)
+            testfreqs = obj.sim.designfrequency * linspace(0.5, 1.0, 200);
+            metal_thickness = 200e-6; %200nm converted to mm
             
+            layer_count = 150;
+            layer_thicknesses = (quasi_layer_thickness - metal_thickness) * ones([1, layer_count - 1]);
+            layer_thicknesses = [(quasi_layer_thickness - metal_thickness)/2 layer_thicknesses (quasi_layer_thickness - metal_thickness)/2];
+
+            TLlength = sum(layer_thicknesses);
+
+            for i = 1:length(bgratio)
+                squaresize = bgratio(i);
+                metamaterialTL = TL(squaresize * ones([1, layer_count]), layer_thicknesses, obj.proto_tl);
+
+                Sparams(:,:,:,i) = metamaterialTL.SParam(testfreqs);
+                S21 = Sparams(2,1,:,i);
+                phase = angle(S21);
+                phase = unwrap(phase);
+                
+                delta_phase = phase(end) - phase(1);
+                delta_freq = testfreqs(end) - testfreqs(1);
+
+                index(i) = -(delta_phase / delta_freq) * Constants.c / (2 * pi * TLlength);
+            end
+            
+            % iterate
+            for i = 1:length(bgratio)
+                Sparam_temp = s2s(Sparams(:,:,:,i), Constants.Z0, Constants.Z0/index(i));
+                S21 = Sparam_temp(2,1,:);
+                phase = angle(S21);
+                phase = unwrap(phase);
+                
+                delta_phase = phase(end) - phase(1);
+                delta_freq = testfreqs(end) - testfreqs(1);
+
+                index(i) = -(delta_phase / delta_freq) * Constants.c / (2 * pi * TLlength);
+            end 
+        end
+
+
+        function metamaterialTL = ConvertDielectricTLToMetamaterial(obj, dielectric_tl, tracespace)
+            metal_thickness = 200e-6;
             % find thicknesses
             % convert boundaries to thicknesses and locations
             boundaries_extended = [0 obj.layer_boundaries obj.total_thickness];
             quasi_layer_thicknesses = diff(boundaries_extended);
             square_locations = (boundaries_extended(1:end-1) + boundaries_extended(2:end))/2;
             locations_extended = [0 square_locations obj.total_thickness];
-            layer_thicknesses = diff(locations_extended);
+            layer_thicknesses = diff(locations_extended) - metal_thickness;
 
             unique_quasi_thicknesses = unique(quasi_layer_thicknesses);
 
             % set up inverse square sizes
             g = obj.lens_model.grid_dimension;
-            squaresize = linspace(tracespace, g-tracespace, 500);
+            squaresize = linspace(tracespace, g-tracespace, 100);
 
             epsr = obj.proto_tl.Dielectric.Eps_r_grid(obj.sim.designfrequency);
             alpha = 1.15;
@@ -108,7 +150,9 @@ classdef PhilDesigner < handle
             
             for j = 1:length(unique_quasi_thicknesses)
                 spacing = unique_quasi_thicknesses(j);
-                index(j, :) = obj.GetIndexFromSpacing(squaresize, epsr, spacing, alpha, beta);
+                %index(j, :) = obj.GetIndexFromSpacing(squaresize, epsr, spacing, alpha, beta);
+                indexj = obj.cachedGetIndex(obj, squaresize/g, spacing);
+                index(j, :) = indexj;
             end
             
             current_dielectric_index = 1;
@@ -159,7 +203,9 @@ classdef PhilDesigner < handle
             default_tl = TL(0,0, proto_tl);
             TL_collection = createArray([length(obj.radii_collection),1], FillValue=default_tl);
             obj.proto_tl = proto_tl;
-
+            
+            function_handle = @GetIndexFromPhaseSlope;
+            obj.cachedGetIndex = memoize(function_handle);
 
             %obj.tl_collection
 
@@ -220,7 +266,7 @@ classdef PhilDesigner < handle
             r = 1/(2*p(1));
         end
 
-
+        
         %% returns the index of the center part, thickness of the center part, and thickness of the AR coating part 
         function [n_of_r, t_of_r, ar_thick, t0] = DesignIdealDielectric(obj, pathlength)
             t_tot = obj.total_thickness;

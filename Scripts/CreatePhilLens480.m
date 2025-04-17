@@ -2,6 +2,7 @@
 f = 480e9; % 480GHz central frequency
 numfreqs=50;
 freqs = linspace(f*0.4, f*2, numfreqs);
+%freqs = linspace(451e9, 499e9, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
@@ -33,17 +34,8 @@ sim = Simulation(lensmodel, freqs, f);
 
 designer = PhilDesigner(lensmodel, sim);
 
-%%
-squaresize = linspace(0, g, 500);
 
-epsr_polyimide = 3.4;
-spacing = 2.5/150;
-alpha = 1.15;
-beta = 0.035;
 
-index = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing, alpha, beta);
-
-plot(squaresize/g, index);
 
 %%
 
@@ -63,9 +55,27 @@ disp("Converting Lens to Metamaterial Design");
 polyimide_dielectric = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015);
 lossless_polyimide = Dielectric(3.50 * ones(size(freqs)), 0.0, freqs, 0.005, 0.015);
 aluminum_metaatom = Element('..\\..\\HFSS Models\\Polyimide Wideband 3_4 200nm Aluminum g0p2 v99 touchstone');
+aluminum_old = Element('..\\..\\HFSS Models\\Polyimide 3_4 Aluminum g0p2 v99 touchstone');
 proto_tl = ProtoTL(aluminum_metaatom, lossless_polyimide);
 tracespace = 0.003; % 3um converted to mm.
+
+%%
+
 designer.ConvertLensToMetamaterial(proto_tl, tracespace)
+
+%% Tests on index calculation
+squaresize = linspace(0.01*g, 0.985*g, 500);
+
+epsr_polyimide = 3.4;
+spacing = 2.5/150;
+alpha = 1.15;
+beta = 0.035;
+
+index_adhitya = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing, alpha, beta);
+index_emprical = designer.GetIndexFromPhaseSlope(squaresize/g, spacing);
+plot(squaresize/g, index_adhitya, squaresize/g, index_emprical);
+
+
 
 %%
 % test path length algorithms
@@ -124,7 +134,7 @@ imagesc(lensmodel.xvec, lensmodel.yvec, passivity);
 colorbar;
 
 %% Plot phase output of lens surface (
-phase = angle(lensmodel.S_array(:,:,19));
+phase = angle(lensmodel.S_array(:,:,30));
 imagesc(lensmodel.xvec, lensmodel.yvec, phase);
 colorbar;
 
@@ -135,9 +145,13 @@ phase1d = (phase(phase_size(1)/2, phase_size(2)/2 : end));
 phase_ideal_1d = (phase_ideal_design(phase_size(1)/2, phase_size(2)/2 : end));
 
 phase_error = unwrap(phase_ideal_1d) - unwrap(phase1d);
+%phase_error = abs(phase_ideal_1d - phase1d); 
+%flip_phase_error = 2*pi - phase_error;
+%phase_error(phase_error > pi) = flip_phase_error(phase_error > pi);
 plotx = 1:length(phase1d);
 
 plot(plotx,rad2deg(phase1d), plotx, rad2deg(phase_ideal_1d), plotx, rad2deg(phase_error));
+xlabel("Distance from lens center (grid units)");
 
 %% Plot central metamaterial square sizes
 
@@ -158,6 +172,7 @@ ylim([0,1]);
 title("Strehl Ratio of Broadband Lens Design");
 xlabel("Frequency (GHz)");
 ylabel("Efficiency (unitless)");
+
 
 %% Plot strehl only
 
