@@ -1,4 +1,5 @@
 
+
 f = 480e9; % 480GHz central frequency
 numfreqs=50;
 freqs = linspace(f*0.4, f*2, numfreqs);
@@ -7,6 +8,7 @@ freqs = linspace(f*0.4, f*2, numfreqs);
 lambda = Constants.c/f;
 %gridding size
 g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
+g=0.2
 %g=lambda*1;
 
 total_thickness = 2.5; %16mm total thickness
@@ -38,6 +40,18 @@ designer = PhilDesigner(lensmodel, sim);
 
 
 %%
+%% Tests on index calculation
+squaresize = linspace(0.01*g, 0.985*g, 500);
+
+epsr_polyimide = 3.4;
+spacing = 2.5/150;
+alpha = 1.15;
+beta = 0.035;
+
+index_adhitya = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing, alpha, beta);
+%index_emprical = designer.GetIndexFromPhaseSlope(squaresize/g, spacing);
+%plot(squaresize/g, index_adhitya, squaresize/g, index_emprical);
+plot(squaresize, index_adhitya);
 
 
 %%
@@ -72,9 +86,9 @@ alpha = 1.15;
 beta = 0.035;
 
 index_adhitya = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing, alpha, beta);
-index_emprical = designer.GetIndexFromPhaseSlope(squaresize/g, spacing);
-plot(squaresize/g, index_adhitya, squaresize/g, index_emprical);
-
+%index_emprical = designer.GetIndexFromPhaseSlope(squaresize/g, spacing);
+%plot(squaresize/g, index_adhitya, squaresize/g, index_emprical);
+plot(squaresize/g, index_adhitya);
 
 
 %%

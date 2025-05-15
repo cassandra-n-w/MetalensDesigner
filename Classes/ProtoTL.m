@@ -32,10 +32,10 @@ classdef ProtoTL < handle
             el_abcd = obj.Element.abcd_interp(frequencies, sizes);
             di_abcd = obj.Dielectric.abcd_interp(frequencies, thicknesses);
             
-            szel = size(el_abcd);
-            szdi = size(di_abcd);
+            [~, ~, ~, szel] = size(el_abcd);
+            [~, ~, ~, szdi] = size(di_abcd);
             
-            if szdi(4) ~= (szel(4) + 1)
+            if szdi ~= (szel + 1)
                 warning('Warning: expected there to be one more dielectic layer than element layers');
             end    
             
@@ -43,7 +43,7 @@ classdef ProtoTL < handle
             % together the abcd parameters of its individual elements.
             prod = di_abcd(:,:,:,1);
             
-            for i = 1:szel(4)
+            for i = 1:szel
                 
                 prod = pagemtimes(pagemtimes(prod, el_abcd(:,:,:,i)), di_abcd(:,:,:,i+1));
                 
