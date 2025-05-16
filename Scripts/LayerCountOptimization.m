@@ -1,4 +1,4 @@
-f = 240e9;
+f = 480e9;
 
 lambda = Constants.c / f;
 
@@ -16,7 +16,7 @@ beta = 0.07;
 
 diameter = 130;
 
-focal_length = 390;
+focal_length = 150;
 
 OPDR = -diameter^2/(8 * focal_length);
 

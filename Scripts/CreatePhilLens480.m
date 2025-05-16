@@ -8,10 +8,10 @@ freqs = linspace(f*0.4, f*2, numfreqs);
 lambda = Constants.c/f;
 %gridding size
 g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
-g=0.2
+%g=0.2
 %g=lambda*1;
 
-total_thickness = 2.5; %16mm total thickness
+total_thickness = 4.05; %16mm total thickness
 
 % diameter of active lens area and structural lens area, respectively
 diameter = 130;
@@ -57,8 +57,8 @@ plot(squaresize, index_adhitya);
 %%
 %designer.DesignDielectricGrinDiscretizeZ(11);
 disp("Designing Lens");
-designer.DesignDielectricGrinDiscretizeZ(150);
-%designer.DesignDielectricGrin();
+%designer.DesignDielectricGrinDiscretizeZ(150);
+designer.DesignDielectricGrin();
 
 %% save design's phase output for comparison purposes.
 lensmodel.CalcSParam(freqs);
@@ -75,7 +75,7 @@ tracespace = 0.003; % 3um converted to mm.
 
 %%
 
-designer.ConvertLensToMetamaterial(proto_tl, tracespace)
+%designer.ConvertLensToMetamaterial(proto_tl, tracespace)
 
 %% Tests on index calculation
 squaresize = linspace(0.01*g, 0.985*g, 500);
