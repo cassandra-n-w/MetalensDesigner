@@ -52,7 +52,7 @@ classdef PhilDesigner < handle
 
             default_tl = TL_1Param(0,0);
             TL_collection = createArray([length(radii),1], FillValue=default_tl);
-
+            
             if isscalar(layer_count)
                 layer_boundaries = (obj.total_thickness / layer_count) * (1:layer_count);
             elseif length(layer_count) == 2
@@ -73,7 +73,7 @@ classdef PhilDesigner < handle
                 if (mod(i,10) == 0)
                     disp(num2str(i) + "/" + num2str(length(radii)));
                 end
-                if (layer_boundaries == 0)
+                if (length(layer_boundaries) == 0)
                     TL_collection(i) = obj.DesignDielectricGrinTL(pathlength(i));
                 else
                     TL_collection(i) = obj.DesignDielectricGrinTLDiscretize(pathlength(i), layer_boundaries);
