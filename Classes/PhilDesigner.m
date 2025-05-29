@@ -7,8 +7,13 @@ classdef PhilDesigner < handle
         sim
         total_thickness
         n0
+
         rinterp
         phaseinterp
+
+        zone_bounds
+        zone_jump
+
         layer_boundaries
         proto_tl
 
@@ -16,6 +21,8 @@ classdef PhilDesigner < handle
         radii_collection
 
         cachedGetIndex
+
+        is_metamaterial
     end
     
     methods
@@ -26,6 +33,9 @@ classdef PhilDesigner < handle
             obj.sim = sim;
             obj.total_thickness = obj.lens_model.layer_thicknesses;
             obj.n0 = 7;
+            obj.is_metamaterial = false;
+
+            obj.SimIdealPathLength();
         end
         
         function DesignDielectricGrin(obj)
@@ -48,7 +58,7 @@ classdef PhilDesigner < handle
             
             dr = obj.lens_model.grid_dimension / 4;
             radii = 0:dr:(obj.lens_model.diameter/2);
-            pathlength = obj.FindIdealPathLength(radii);
+            pathlength = obj.PathLengthInterp(radii);
 
             default_tl = TL_1Param(0,0);
             TL_collection = createArray([length(radii),1], FillValue=default_tl);
@@ -200,6 +210,7 @@ classdef PhilDesigner < handle
         end
         
         function ConvertLensToMetamaterial(obj, proto_tl, tracespace)
+            obj.is_metamaterial = true;
             default_tl = TL(0,0, proto_tl);
             TL_collection = createArray([length(obj.radii_collection),1], FillValue=default_tl);
             obj.proto_tl = proto_tl;
@@ -221,8 +232,31 @@ classdef PhilDesigner < handle
             obj.lens_model.SetRadialDesign(TL_collection, obj.radii_collection);
         end
 
-        function pathlength = FindIdealPathLength(obj, r)
-            lamb_x = Constants.c/obj.sim.designfrequency;
+        % function pathlength = FindIdealPathLength(obj, r)
+        %     lamb_x = Constants.c/obj.sim.designfrequency;
+        %     f = obj.sim.designfrequency;
+        %     phasesim = Simulation(obj.lens_model, f, f);
+        %     phasegrid = angle(phasesim.calc_ideal_phase());
+        %     rgrid = sqrt(phasesim.x.^2 + phasesim.y.^2);
+        %     rinterp = rgrid(round(phasesim.dims(1)/2), 1:round(phasesim.dims(2)/2));
+        %     phaseinterp = phasegrid(round(phasesim.dims(1)/2), 1:round(phasesim.dims(2)/2));
+        %     phaseinterp = unwrap(phaseinterp);
+        %     obj.rinterp = rinterp;
+        %     obj.phaseinterp = phaseinterp;
+        % 
+        %     phaser = interp1(rinterp, phaseinterp, r, 'spline');
+        %     phase0 = interp1(rinterp, phaseinterp, 0, 'spline');
+        % 
+        %     pathlength = lamb_x * phaser / (2*pi);
+        %     pathlength0 = lamb_x * phase0 / (2*pi);
+        %     pathlength = pathlength - pathlength0;
+        % end
+
+        
+        function SimIdealPathLength(obj)
+            % use the fourier optics simulator to determine the ideal path
+            % length from the phase output of an ideal gaussian beam. Store
+            % the ideal path length for later use
             f = obj.sim.designfrequency;
             phasesim = Simulation(obj.lens_model, f, f);
             phasegrid = angle(phasesim.calc_ideal_phase());
@@ -232,16 +266,32 @@ classdef PhilDesigner < handle
             phaseinterp = unwrap(phaseinterp);
             obj.rinterp = rinterp;
             obj.phaseinterp = phaseinterp;
-
-            phaser = interp1(rinterp, phaseinterp, r, 'spline');
-            phase0 = interp1(rinterp, phaseinterp, 0, 'spline');
-
-            pathlength = lamb_x * phaser / (2*pi);
-            pathlength0 = lamb_x * phase0 / (2*pi);
-            pathlength = pathlength - pathlength0;
         end
 
         function pathlength = PathLengthInterp(obj, r)
+            % Use the stored path length information to interpolate the
+            % path length for a given radius range. Include fresnel zone
+            % jumps.
+            pathlength = obj.PathLengthInterpRaw(r);
+
+            %lamb_x = Constants.c/obj.sim.designfrequency;
+
+            if length(obj.zone_bounds) > 0
+                pathmat = repmat(pathlength', 1, length(obj.zone_bounds));
+                boundmat = repmat(obj.zone_bounds, length(r), 1);
+    
+                zone_boolean = pathmat > boundmat;
+                correction = squeeze(zone_boolean * obj.zone_jump');
+            else
+                correction = 0;
+            end
+            
+            pathlength = pathlength - correction';
+        end
+
+        function pathlength = PathLengthInterpRaw(obj, r)
+            % Use the stored path length information to interpolate the
+            % path length for a given radius range.
             lamb_x = Constants.c/obj.sim.designfrequency;
             phaser = interp1(obj.rinterp, obj.phaseinterp, r, 'spline');
             phase0 = interp1(obj.rinterp, obj.phaseinterp, 0, 'spline');
@@ -249,6 +299,28 @@ classdef PhilDesigner < handle
             pathlength = lamb_x * phaser / (2*pi);
             pathlength0 = lamb_x * phase0 / (2*pi);
             pathlength = pathlength - pathlength0;
+        end
+        
+        function SetZoneBounds(obj, bounds, jumpsizes)
+            % bounds are the locations (in mm pathlength) of the jumps, jumpsizes
+            % is how many mm to jump.
+            obj.zone_bounds = bounds;
+            obj.zone_jump = jumpsizes;
+        end
+
+        function ZoneBoundsEveryTwoPi(obj)
+            % example of zone testing, places z bound every two pi
+            pathmax = obj.PathLengthInterpRaw(obj.lens_model.diameter/2);
+            lamb_x = Constants.c/obj.sim.designfrequency;
+
+            jumpcount = floor(pathmax / (lamb_x));
+            
+            for i = 1:jumpcount
+                bounds(i) = i * lamb_x;
+                jump(i) = lamb_x;
+            end
+
+            obj.SetZoneBounds(bounds, jump);
         end
 
         function pathlength = FindNaivePathLength(obj, r)
@@ -260,14 +332,14 @@ classdef PhilDesigner < handle
             dr = obj.lens_model.grid_dimension / 4;
             radii = -(obj.lens_model.diameter/2):dr:(obj.lens_model.diameter/2);
 
-            pathlength = obj.FindIdealPathLength(abs(radii));
+            pathlength = obj.PathLengthInterpRaw(abs(radii));
 
             p = polyfit(radii, pathlength, 2);
             r = 1/(2*p(1));
         end
 
         
-        %% returns the index of the center part, thickness of the center part, and thickness of the AR coating part 
+        % returns the index of the center part, thickness of the center part, and thickness of the AR coating part 
         function [n_of_r, t_of_r, ar_thick, t0] = DesignIdealDielectric(obj, pathlength)
             t_tot = obj.total_thickness;
             

@@ -53,6 +53,9 @@ index_adhitya = designer.GetIndexFromSpacing(squaresize, epsr_polyimide, spacing
 %plot(squaresize/g, index_adhitya, squaresize/g, index_emprical);
 plot(squaresize, index_adhitya);
 
+%%
+disp("Fresnelify")
+designer.ZoneBoundsEveryTwoPi();
 
 %%
 %designer.DesignDielectricGrinDiscretizeZ(11);
@@ -74,7 +77,7 @@ proto_tl = ProtoTL(aluminum_metaatom, lossless_polyimide);
 tracespace = 0.003; % 3um converted to mm.
 
 %%
-
+disp("Not actually, skipping conversion");
 %designer.ConvertLensToMetamaterial(proto_tl, tracespace)
 
 %% Tests on index calculation
@@ -98,13 +101,14 @@ dr = lambda/20;
 r = 0:dr:(lensmodel.diameter/2);
 
 pathNaive = designer.FindNaivePathLength(r);
-pathIdeal = designer.FindIdealPathLength(r);
+pathIdealRaw = designer.PathLengthInterpRaw(r);
+pathIdeal = designer.PathLengthInterp(r);
 
 Rz = designer.idealCurvature();
 
-plot(r, pathNaive, r, pathIdeal, r, r.^2/(2*Rz));
+plot(r, pathNaive, r, pathIdeal, r, pathIdealRaw);
 
-legend(["Naive","Ideal","Curvature"]);
+legend(["Naive","Ideal","Raw"]);
 
 % plots suggest not perfectly quadratic
 
@@ -169,13 +173,16 @@ xlabel("Distance from lens center (grid units)");
 
 %% Plot central metamaterial square sizes
 
-tl_collection = lensmodel.TL_collection;
-
-for i = 1:length(tl_collection)
-    squaresize(i) = tl_collection(i).sizes(75);
+if (designer.is_metamaterial)
+    
+    tl_collection = lensmodel.TL_collection;
+    
+    for i = 1:length(tl_collection)
+        squaresize(i) = tl_collection(i).sizes(75);
+    end
+    
+    plot(squaresize);
 end
-
-plot(squaresize);
 
 %% Plot all loss sources
 gfreqs = freqs/1e9;
