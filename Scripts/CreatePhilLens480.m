@@ -1,8 +1,8 @@
 
 
 f = 480e9; % 480GHz central frequency
-numfreqs=50;
-freqs = linspace(f*0.4, f*2, numfreqs);
+numfreqs=100;
+freqs = linspace(f*0.8, f*1.2, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
 lambda = Constants.c/f;
@@ -10,6 +10,8 @@ lambda = Constants.c/f;
 g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 %g=0.2
 %g=lambda*1;
+
+epsr_polyimide = 3.4;
 
 total_thickness = 4.05; %16mm total thickness
 
@@ -34,7 +36,7 @@ lensmodel.DeclareTL_1Param();
 
 sim = Simulation(lensmodel, freqs, f);
 
-designer = PhilDesigner(lensmodel, sim);
+designer = PhilDesigner(lensmodel, sim, sqrt(epsr_polyimide), 7.0);
 
 
 
@@ -43,7 +45,6 @@ designer = PhilDesigner(lensmodel, sim);
 %% Tests on index calculation
 squaresize = linspace(0.01*g, 0.985*g, 500);
 
-epsr_polyimide = 3.4;
 spacing = 2.5/150;
 alpha = 1.15;
 beta = 0.035;
@@ -58,6 +59,9 @@ disp("Fresnelify")
 designer.ZoneBoundsEveryTwoPi();
 
 %%
+disp("Minimize lens thickness");
+designer.MinimizeThickness();
+
 %designer.DesignDielectricGrinDiscretizeZ(11);
 disp("Designing Lens");
 %designer.DesignDielectricGrinDiscretizeZ(150);
@@ -256,3 +260,10 @@ end
 
 axis off;
 hold off;
+
+%% print out lens specifications
+
+disp(strcat("Diameter: ", num2str(diameter), "mm"));
+disp(strcat("Focal Length: ", num2str(focal_length), "mm"));
+disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm"));
+disp(strcat("Bandwidth: ", "placeholder"));

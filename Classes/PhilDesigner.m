@@ -7,6 +7,7 @@ classdef PhilDesigner < handle
         sim
         total_thickness
         n0
+        n_min
 
         rinterp
         phaseinterp
@@ -26,13 +27,17 @@ classdef PhilDesigner < handle
     end
     
     methods
-        function obj = PhilDesigner(lens_model, sim)
+        function obj = PhilDesigner(lens_model, sim, n_min, n_max)
             %PHILDESIGNER Construct an instance of this class
             %   Detailed explanation goes here
             obj.lens_model = lens_model;
             obj.sim = sim;
             obj.total_thickness = obj.lens_model.layer_thicknesses;
-            obj.n0 = 7;
+            obj.n0 = n_max;
+
+            % n_min should be equal to the index of refraction of the
+            % substrate material
+            obj.n_min = n_min;
             obj.is_metamaterial = false;
 
             obj.SimIdealPathLength();
@@ -299,6 +304,24 @@ classdef PhilDesigner < handle
             pathlength = lamb_x * phaser / (2*pi);
             pathlength0 = lamb_x * phase0 / (2*pi);
             pathlength = pathlength - pathlength0;
+        end
+
+        function MinimizeThickness(obj)
+            lamb_x = Constants.c/obj.sim.designfrequency;
+            n_max = obj.n0;
+
+            r = 0:(lamb_x / 20):obj.lens_model.diameter;
+            pathlength_diff = min(obj.PathLengthInterp(r)) - max(obj.PathLengthInterp(r));
+
+            AR_thickness = lamb_x/2 / (obj.n_min + sqrt(n_max));
+            phase_thickness = pathlength_diff / (obj.n_min^2 - n_max);
+            assert(phase_thickness >= 0);
+            assert(AR_thickness >= 0);
+
+            thickness = AR_thickness + phase_thickness;
+
+            obj.total_thickness = thickness;
+            obj.lens_model.layer_thicknesses = thickness;
         end
         
         function SetZoneBounds(obj, bounds, jumpsizes)
