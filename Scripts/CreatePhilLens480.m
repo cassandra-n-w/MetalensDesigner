@@ -267,4 +267,4 @@ hold off;
 disp(strcat("Diameter: ", num2str(diameter), "mm"));
 disp(strcat("Focal Length: ", num2str(focal_length), "mm"));
 disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm"));
-disp(strcat("Bandwidth (50% Strehl): ", num2str(bwminfreq), " to ", num2str(bwmaxfreq), " GHz"));
+disp(strcat("Bandwidth (50% Strehl): ", num2str(bwminfreq, '%.4g'), " to ", num2str(bwmaxfreq, '%.4g'), " GHz"));
