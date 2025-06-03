@@ -198,6 +198,7 @@ title("Strehl Ratio of Broadband Lens Design");
 xlabel("Frequency (GHz)");
 ylabel("Efficiency (unitless)");
 
+[bwminfreq, bwmaxfreq] = Simulation.calc_bandwidth(strehl_ratio, 0.5, gfreqs);
 
 %% Plot strehl only
 
@@ -266,4 +267,4 @@ hold off;
 disp(strcat("Diameter: ", num2str(diameter), "mm"));
 disp(strcat("Focal Length: ", num2str(focal_length), "mm"));
 disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm"));
-disp(strcat("Bandwidth: ", "placeholder"));
+disp(strcat("Bandwidth (50% Strehl): ", num2str(bwminfreq), " to ", num2str(bwmaxfreq), " GHz"));

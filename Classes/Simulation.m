@@ -416,6 +416,40 @@ classdef Simulation < handle
     end
     
     methods(Static)
+        function [minfreq, maxfreq] = calc_bandwidth(measurement, threshhold, frequencies)
+            [centerval, centerindex] = max(measurement);
+
+            if (centerval < threshhold)
+                minfreq = NaN;
+                maxfreq = NaN;
+                return;
+            end
+
+            lowerside = flip(measurement(1:centerindex));
+            freq_lowerside = flip(frequencies(1:centerindex));
+            upperside = measurement(centerindex:end);
+            freq_upperside = frequencies(centerindex:end);
+            
+            [~, minfreq] = Simulation.find_first_intersection(lowerside, threshhold, freq_lowerside);
+            [~, maxfreq] = Simulation.find_first_intersection(upperside, threshhold, freq_upperside);
+        end
+
+        function [meas, frequency] = find_first_intersection(measurement, threshhold, frequencies)
+            num_points = 100;
+            [v1, i1] = Simulation.find_first_lessthan(measurement, threshhold);
+
+            more_accurate_measurement = linspace(measurement(i1-1), v1,num_points);
+            more_accurate_frequency = linspace(frequencies(i1-1), frequencies(i1), num_points);
+            [meas, index] = Simulation.find_first_lessthan(more_accurate_measurement, threshhold);
+            frequency = more_accurate_frequency(index);
+        end
+
+        function [value, index] = find_first_lessthan(measurement, threshhold)
+
+            index = find(measurement < threshhold, 1);
+            value = measurement(index);
+        end
+
         function [k, lambda] = f_to_k_lambda(f)
             c = 299792458000;
             lambda = c./f;
