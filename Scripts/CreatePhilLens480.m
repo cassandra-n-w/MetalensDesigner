@@ -1,14 +1,14 @@
 
 
-f = 480e9; % 480GHz central frequency
+f = 57.5e9; % 480GHz central frequency
 numfreqs=100;
 freqs = linspace(f*0.8, f*1.2, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
 lambda = Constants.c/f;
 %gridding size
-g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
-%g=0.2
+%g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
+g = 0.2 * lambda;
 %g=lambda*1;
 
 epsr_polyimide = 3.4;
@@ -16,10 +16,10 @@ epsr_polyimide = 3.4;
 total_thickness = 4.05; %16mm total thickness
 
 % diameter of active lens area and structural lens area, respectively
-diameter = 130;
-struct_diam = 130;
+diameter = 1000;
+struct_diam = 1000;
 
-focal_length = 150;
+focal_length = 2000;
 
 % total_thickness = 0.3; %16mm total thickness
 % 
@@ -162,9 +162,12 @@ colorbar;
 
 %% 
 phase_size = size(phase);
-phase1d = (phase(phase_size(1)/2, phase_size(2)/2 : end));
+halfsize1 = round(phase_size(1)/2);
+halfsize2 = round(phase_size(2)/2);
 
-phase_ideal_1d = (phase_ideal_design(phase_size(1)/2, phase_size(2)/2 : end));
+phase1d = (phase(halfsize1, halfsize2 : end));
+
+phase_ideal_1d = (phase_ideal_design(halfsize1, halfsize2 : end));
 
 phase_error = unwrap(phase_ideal_1d) - unwrap(phase1d);
 %phase_error = abs(phase_ideal_1d - phase1d); 
@@ -267,4 +270,18 @@ hold off;
 disp(strcat("Diameter: ", num2str(diameter), "mm"));
 disp(strcat("Focal Length: ", num2str(focal_length), "mm"));
 disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm"));
+micron_tracespace = false;
+if (micron_tracespace)
+    tracespace = 0.003;
+    disp(strcat("Min Feature Size: ", num2str(tracespace * 1000), " micron"));
+else
+    mil_to_mm = 0.0254;
+    tracespace = 5 * mil_to_mm;
+    disp(strcat("Min Feature Size: ", num2str(tracespace / mil_to_mm), " mil"));
+end
+
+layerspacing = designer.GetMinLayerSpacing(alpha, beta, tracespace);
+disp(strcat("Est. Layer Spacing: ", num2str(layerspacing), "mm"));
+disp(strcat("Est. Layer Count: ", num2str(designer.total_thickness/layerspacing)));
+
 disp(strcat("Bandwidth (50% Strehl): ", num2str(bwminfreq, '%.4g'), " to ", num2str(bwmaxfreq, '%.4g'), " GHz"));

@@ -466,6 +466,23 @@ classdef PhilDesigner < handle
 
             out = Constants.Z0 ./ Zeff;
         end
+
+        function spacing = GetMinLayerSpacing(obj, alpha, beta, a)
+            lambda = Constants.c/obj.sim.designfrequency;
+            spacing = PhilDesigner.calcMinLayerSpacing(alpha, beta, obj.lens_model.grid_dimension, a, lambda, obj.n_min, obj.n0);
+        end
+    end
+
+    methods(Static)
+        function spacing = calcMinLayerSpacing(alpha, beta, g, a, lambda, n_min, n_max)
+            % a is equal to the spacing between horizontally adjacent
+            % meta-atoms
+            numerator = (alpha * 2 * g / pi) * log(csc(pi * a / (2*g)));
+            denom = (n_max^2 / (n_min^2)) - 1;
+            fudge = beta * lambda * a/g;
+            spacing = (numerator / denom) - fudge;
+        end
+
     end
 end
 
