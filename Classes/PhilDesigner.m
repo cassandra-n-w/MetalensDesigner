@@ -306,19 +306,14 @@ classdef PhilDesigner < handle
             pathlength = pathlength - pathlength0;
         end
 
-        function MinimizeThickness(obj)
+        function [thickness, AR_thickness, phase_thickness] = MinimizeThickness(obj)
             lamb_x = Constants.c/obj.sim.designfrequency;
             n_max = obj.n0;
 
             r = 0:(lamb_x / 20):obj.lens_model.diameter;
             pathlength_diff = min(obj.PathLengthInterp(r)) - max(obj.PathLengthInterp(r));
 
-            AR_thickness = lamb_x/2 / (obj.n_min + sqrt(n_max));
-            phase_thickness = pathlength_diff / (obj.n_min^2 - n_max);
-            assert(phase_thickness >= 0);
-            assert(AR_thickness >= 0);
-
-            thickness = AR_thickness + phase_thickness;
+            [thickness, AR_thickness, phase_thickness] = PhilDesigner.calcMinThickness(lamb_x, pathlength_diff, obj.n_min, n_max);
 
             obj.total_thickness = thickness;
             obj.lens_model.layer_thicknesses = thickness;
@@ -482,7 +477,17 @@ classdef PhilDesigner < handle
             fudge = beta * lambda * a/g;
             spacing = (numerator / denom) - fudge;
         end
+        
+        function [thickness, AR_thickness, phase_thickness] = calcMinThickness(lamb_x, pathlength_diff, n_min, n_max)
 
+            AR_thickness = lamb_x/2 / (n_min + sqrt(n_max));
+            phase_thickness = pathlength_diff / (n_min^2 - n_max);
+
+            assert(phase_thickness >= 0);
+            assert(AR_thickness >= 0);
+            
+            thickness = AR_thickness + phase_thickness;
+        end
     end
 end
 

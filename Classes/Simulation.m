@@ -447,6 +447,9 @@ classdef Simulation < handle
         function [value, index] = find_first_lessthan(measurement, threshhold)
 
             index = find(measurement < threshhold, 1);
+            if isempty(index)
+                index = length(measurement);
+            end
             value = measurement(index);
         end
 

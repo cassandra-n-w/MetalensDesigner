@@ -1,7 +1,7 @@
 
 
-f = 57.5e9; % 480GHz central frequency
-numfreqs=100;
+f = 182.5e9; % 480GHz central frequency
+numfreqs=20;
 freqs = linspace(f*0.8, f*1.2, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
@@ -19,7 +19,7 @@ total_thickness = 4.05; %16mm total thickness
 diameter = 1000;
 struct_diam = 1000;
 
-focal_length = 2000;
+focal_length = 3000;
 
 % total_thickness = 0.3; %16mm total thickness
 % 
@@ -36,7 +36,7 @@ lensmodel.DeclareTL_1Param();
 
 sim = Simulation(lensmodel, freqs, f);
 
-designer = PhilDesigner(lensmodel, sim, sqrt(epsr_polyimide), 7.0);
+designer = PhilDesigner(lensmodel, sim, sqrt(epsr_polyimide), 6.5);
 
 
 
@@ -60,7 +60,7 @@ designer.ZoneBoundsEveryTwoPi();
 
 %%
 disp("Minimize lens thickness");
-designer.MinimizeThickness();
+[min_thickness, AR_thickness, phase_thickness] = designer.MinimizeThickness();
 
 %designer.DesignDielectricGrinDiscretizeZ(11);
 disp("Designing Lens");
@@ -134,7 +134,7 @@ sim.lensTransform();
 
 % propagate
 disp("Propagate");
-scan_z = focal_length*linspace(0.0,1.3,300);
+scan_z = focal_length*linspace(0.0,1.3,15);
 
 sim.propagate(scan_z);
 disp("Save field");
@@ -269,14 +269,14 @@ hold off;
 
 disp(strcat("Diameter: ", num2str(diameter), "mm"));
 disp(strcat("Focal Length: ", num2str(focal_length), "mm"));
-disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm"));
-micron_tracespace = false;
+disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm : AR ", num2str(AR_thickness), "mm + phase ", num2str(phase_thickness), "mm"));
+micron_tracespace = true;
 if (micron_tracespace)
     tracespace = 0.003;
     disp(strcat("Min Feature Size: ", num2str(tracespace * 1000), " micron"));
 else
     mil_to_mm = 0.0254;
-    tracespace = 5 * mil_to_mm;
+    tracespace = 3 * mil_to_mm;
     disp(strcat("Min Feature Size: ", num2str(tracespace / mil_to_mm), " mil"));
 end
 
