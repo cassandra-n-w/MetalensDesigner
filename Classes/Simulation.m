@@ -207,14 +207,55 @@ classdef Simulation < handle
         end
         
         % breaks down loss into reflection, dielectric, and optical
+        function [reflect, dielectric, optical, strehl] = CalcLossVectorized(obj)
+            [reflect, dielectric, optical, strehl] = obj.CalcLossByFreq(obj.frequency);
+
+
+            % disp("Pad");
+            % S11 = obj.lens_model.PadGeneral(obj.lens_model.S11_array, zeros(obj.dims), obj.frequency);
+            % S21 = obj.lens_model.PadMultiFreq(zeros(obj.dims), obj.frequency);
+            % 
+            % efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (obj.lens_model.diameter/2)) * exp(0);
+            % sim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+            % disp("Initialize Reflect Loss");
+            % % initialize incoming plane wave
+            % sim.initialize_E_field(efield);
+            % disp("Transform");
+            % % transform through reflection of lens
+            % sim.transform(S11);
+            % 
+            % reflect = squeeze(1 - sim.calculate_power());
+            % disp("Initialize Material Loss");
+            % sim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+            % sim.initialize_E_field(efield);
+            % sim.transform(S21);
+            % 
+            % dielectric = squeeze(sim.calculate_power()) ./ reflect;
+            % disp("Calculate Strehl Ratio");
+            % strehl = squeeze(sim.StrehlRatio());
+            % disp("Done Strehl Ratio");
+            % optical = strehl ./ (dielectric .* reflect);
+            % disp("Done Loss Calculation");
+        end
+        
+
+        % this function 
         function [reflect, dielectric, optical, strehl] = CalcLoss(obj)
+            freqs = obj.frequency;
             
+            for i = 1:length(freqs)
+                [reflect(i), dielectric(i), optical(i), strehl(i)] = obj.CalcLossByFreq(freqs(i));
+            end
+        end
+
+        function [reflect, dielectric, optical, strehl] = CalcLossByFreq(obj, freq)
+
             disp("Pad");
-            S11 = obj.lens_model.PadGeneral(obj.lens_model.S11_array, zeros(obj.dims), obj.frequency);
-            S21 = obj.lens_model.PadMultiFreq(zeros(obj.dims), obj.frequency);
+            S11 = obj.lens_model.PadMultiFreqS11(zeros(obj.dims), freq);
+            S21 = obj.lens_model.PadMultiFreq(zeros(obj.dims), freq);
             
             efield = @(x,y,f) (sqrt(x.^2 + y.^2) < (obj.lens_model.diameter/2)) * exp(0);
-            sim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+            sim = Simulation(obj.lens_model, freq, obj.designfrequency);
             disp("Initialize Reflect Loss");
             % initialize incoming plane wave
             sim.initialize_E_field(efield);
@@ -224,7 +265,7 @@ classdef Simulation < handle
             
             reflect = squeeze(1 - sim.calculate_power());
             disp("Initialize Material Loss");
-            sim = Simulation(obj.lens_model, obj.frequency, obj.designfrequency);
+            sim = Simulation(obj.lens_model, freq, obj.designfrequency);
             sim.initialize_E_field(efield);
             sim.transform(S21);
             
@@ -235,7 +276,7 @@ classdef Simulation < handle
             optical = strehl ./ (dielectric .* reflect);
             disp("Done Loss Calculation");
         end
-        
+
         % single frequency!
         function scan = receiver_scan(obj, receiver_func, xscan, yscan)
             scan = zeros(length(xscan), length(yscan), length(obj.frequency));

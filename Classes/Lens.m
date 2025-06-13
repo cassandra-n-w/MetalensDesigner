@@ -324,6 +324,16 @@ classdef Lens < handle
                 out(:,:,i) = obj.PadSParams(pad, frequencies(i));
             end
         end
+
+        function out = PadMultiFreqS11(obj, pad, frequencies)
+            sz = size(pad);
+            out = zeros([sz(1), sz(2), length(frequencies)]); 
+            
+            for i = 1:length(frequencies)
+                [~, s11] = obj.PadSParamsS21S11(pad, frequencies(i));
+                out(:,:,i) = s11;
+            end
+        end
         
         function out = PadGeneral(obj, input, pad, frequencies)
             sz = size(pad);
@@ -365,17 +375,23 @@ classdef Lens < handle
             %Note: calculate only at a single frequency. if multiple
             %frequencies are given, the first will be used.
             
+            [out, ~] = obj.PadSParamsS21S11(pad, frequency);
+        end
+
+        function [s21, s11] = PadSParamsS21S11(obj, pad, frequency)
             idx = find(obj.sim_frequency == frequency(1), 1);
             
             if numel(idx) > 0
-                s_param = obj.S_array(:,:,idx);
+                s_param21 = obj.S_array(:,:,idx);
+                s_param11 = obj.S11_array(:,:,idx);
             else
                 obj.CalcSParam(frequency);
-                s_param = obj.S_array(:,:,1);
+                s_param21 = obj.S_array(:,:,1);
+                s_param11 = obj.S11_array(:,:,idx);
             end
             
             szpad = size(pad);
-            szsim = size(s_param);
+            szsim = size(s_param21);
 %             
 %             maxlim = ceil(szpad/2 + szsim/2);
 %             minlim = ceil(1 + szpad/2 - szsim/2);
@@ -384,12 +400,17 @@ classdef Lens < handle
             
             padamount = ceil((szpad - szsim)/2);
 
-            temp = padarray(s_param, padamount, 0);
-            sztemp = size(temp);
+            temp21 = padarray(s_param21, padamount, 0);
+            sztemp21 = size(temp21);
+            szerror21 = sztemp21 - szpad;
             
-            szerror = sztemp - szpad;
+            s21 = temp21(1:end - szerror21(1), 1:end - szerror21(2));
+
+            temp11 = padarray(s_param11, padamount, 0);
+            sztemp11 = size(temp11);
+            szerror11 = sztemp11 - szpad;
             
-            out = temp(1:end - szerror(1), 1:end - szerror(2));
+            s11 = temp11(1:end - szerror11(1), 1:end - szerror11(2));
         end
     end
 end

@@ -1,7 +1,7 @@
 
 
-f = 182.5e9; % 480GHz central frequency
-numfreqs=20;
+f = 54e9; % 480GHz central frequency
+numfreqs=100;
 freqs = linspace(f*0.8, f*1.2, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
@@ -156,6 +156,7 @@ imagesc(lensmodel.xvec, lensmodel.yvec, passivity);
 colorbar;
 
 %% Plot phase output of lens surface (
+%phase_indx = 
 phase = angle(lensmodel.S_array(:,:,30));
 imagesc(lensmodel.xvec, lensmodel.yvec, phase);
 colorbar;
