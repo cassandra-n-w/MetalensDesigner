@@ -272,10 +272,14 @@ classdef Lens < handle
             
             if (obj.is_collection_design)
                 obj.S_collection = zeros([2,2,length(frequency),length(obj.TL_collection)]);
-
+                disp("Calculating Sparams");
+                lastlength = 0;
                 for i = 1:length(obj.TL_collection)
                     if (mod(i,10) == 0)
+                        outstr = num2str(i) + "/" + num2str(length(obj.TL_collection));
+                        fprintf(repmat('\b', 1, lastlength + 1));
                         disp(num2str(i) + "/" + num2str(length(obj.TL_collection)));
+                        lastlength = strlength(outstr);
                     end
                     thisTL = obj.TL_collection(i);
                     obj.S_collection(:,:,:,i) = thisTL.SParamModify(frequency, obj.thickness_mult);    
@@ -387,7 +391,7 @@ classdef Lens < handle
             else
                 obj.CalcSParam(frequency);
                 s_param21 = obj.S_array(:,:,1);
-                s_param11 = obj.S11_array(:,:,idx);
+                s_param11 = obj.S11_array(:,:,1);
             end
             
             szpad = size(pad);
