@@ -1,6 +1,6 @@
 
 
-f = 182.5e9; % 480GHz central frequency
+f = 54e9; % 480GHz central frequency
 numfreqs=100;
 freqs = linspace(f*0.8, f*1.2, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
@@ -68,8 +68,8 @@ disp("Designing Lens");
 designer.DesignDielectricGrin();
 
 %% save design's phase output for comparison purposes.
-[~] = lensmodel.CalcSParam(freqs);
-phase_ideal_design = angle(lensmodel.S_array(:,:,19));
+%[~] = lensmodel.CalcSParam(freqs);
+phase_ideal_design = angle(lensmodel.CalcSParam(f));
 
 %% Convert ideal dielectric to metamaterial design
 disp("Converting Lens to Metamaterial Design");
@@ -120,7 +120,7 @@ legend(["Naive","Ideal","Raw"]);
 disp("Simulate");
 sim = Simulation(lensmodel, f, f);
 disp("Calc S Params");
-[~] = lensmodel.CalcSParam(f);
+%[~] = lensmodel.CalcSParam(f);
 % calculate the gaussian coupling of the lens
 
 disp("Initialize E Field");
@@ -146,21 +146,21 @@ delete(sim);
 %strehl_ratio = sim.StrehlRatio();
 disp("Calc S Params");
 sim2 = Simulation(lensmodel, freqs, f);
-[~] = lensmodel.CalcSParam(freqs);
+%[~] = lensmodel.CalcSParam(freqs);
 disp("Calc Losses");
 [ref, d, o, strehl_ratio] = sim2.CalcLoss();
 disp("Done Simulating");
 
 %%
-
-passivity = sqrt(abs(lensmodel.S_array(:,:,round(numfreqs/2))).^2 + abs(lensmodel.S11_array(:,:,round(numfreqs/2)).^2));
+Sparam = lensmodel.CalcSParam(f);
+passivity = sqrt(abs(Sparam).^2 + abs(Sparam).^2);
 
 imagesc(lensmodel.xvec, lensmodel.yvec, passivity);
 colorbar;
 
 %% Plot phase output of lens surface (
 %phase_indx = 
-phase = angle(lensmodel.S_array(:,:,30));
+phase = angle(Sparam);
 imagesc(lensmodel.xvec, lensmodel.yvec, phase);
 colorbar;
 
@@ -219,7 +219,7 @@ ylabel("Strehl Ratio (dimensionless)");
 
 %% Plot the side view of lens beam
 
-E_size = size(E_save);
+%E_size = size(E_save);
 %E_plot = squeeze(E_save(round(E_size(1)/2),:,:));
 
 imagesc(scan_z, sim2.xvec, mag2db(abs(E_plot)));

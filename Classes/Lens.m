@@ -274,16 +274,20 @@ classdef Lens < handle
                 obj.S_collection = zeros([2,2,length(frequency),length(obj.TL_collection)]);
                 disp("Calculating Sparams");
                 lastlength = 0;
+                tic;
                 for i = 1:length(obj.TL_collection)
-                    if (mod(i,10) == 0)
+                    if (toc > 0.05 || (i == length(obj.TL_collection)))
+                        %output progress info
                         outstr = num2str(i) + "/" + num2str(length(obj.TL_collection));
-                        fprintf(repmat('\b', 1, lastlength + 1));
-                        disp(num2str(i) + "/" + num2str(length(obj.TL_collection)));
+                        fprintf(repmat('\b', 1, lastlength));
+                        fprintf(outstr);
                         lastlength = strlength(outstr);
+                        tic;
                     end
                     thisTL = obj.TL_collection(i);
                     obj.S_collection(:,:,:,i) = thisTL.SParamModify(frequency, obj.thickness_mult);    
                 end
+                fprintf("\n");
                 Sout_temp = obj.S_collection(2,1,:,obj.TL_index_map);
                 Sout = reshape(Sout_temp, length(frequency), obj.dims(1), obj.dims(2));
                 Sout = permute(Sout, [2,3,1]);

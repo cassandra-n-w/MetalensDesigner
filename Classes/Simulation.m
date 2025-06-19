@@ -242,10 +242,17 @@ classdef Simulation < handle
         % this function 
         function [reflect, dielectric, optical, strehl] = CalcLoss(obj)
             freqs = obj.frequency;
-            
+
             for i = 1:length(freqs)
+                % output progress info
+                outstr = "Frequency " + num2str(i) + "/" + num2str(length(freqs));
+                fprintf(outstr);
+                
+                % perform calculations one frequency at a time to save
+                % memory
                 [reflect(i), dielectric(i), optical(i), strehl(i)] = obj.CalcLossByFreq(freqs(i));
             end
+            fprintf("\n");
         end
 
         function [reflect, dielectric, optical, strehl] = CalcLossByFreq(obj, freq)
