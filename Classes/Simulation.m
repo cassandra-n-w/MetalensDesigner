@@ -246,7 +246,7 @@ classdef Simulation < handle
             for i = 1:length(freqs)
                 % output progress info
                 outstr = "Frequency " + num2str(i) + "/" + num2str(length(freqs));
-                fprintf(outstr);
+                disp(outstr);
                 
                 % perform calculations one frequency at a time to save
                 % memory
