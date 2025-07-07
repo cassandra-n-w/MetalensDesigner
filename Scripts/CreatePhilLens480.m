@@ -1,7 +1,7 @@
 
 
-f = 54e9; % 480GHz central frequency
-numfreqs=100;
+f = 182.5e9; % 480GHz central frequency
+numfreqs=50;
 freqs = linspace(f*0.8, f*1.2, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
@@ -56,11 +56,15 @@ plot(squaresize, index_adhitya);
 
 %%
 disp("Fresnelify")
-designer.ZoneBoundsEveryTwoPi();
+designer.ZoneBoundsEveryTwoPiSkipCenter(13);
 
 %%
 disp("Minimize lens thickness");
 [min_thickness, AR_thickness, phase_thickness] = designer.MinimizeThickness();
+
+disp("ALTERING THICKNESS");
+min_thickness = min_thickness*0.65;
+designer.SetThickness(min_thickness);
 
 %designer.DesignDielectricGrinDiscretizeZ(11);
 disp("Designing Lens");
@@ -143,6 +147,8 @@ E_size = size(sim.E_saved);
 E_plot = squeeze(sim.E_saved(round(E_size(1)/2),:,:));
 delete(sim);
 
+
+lossTimer = tic;
 %strehl_ratio = sim.StrehlRatio();
 disp("Calc S Params");
 sim2 = Simulation(lensmodel, freqs, f);
@@ -150,6 +156,7 @@ sim2 = Simulation(lensmodel, freqs, f);
 disp("Calc Losses");
 [ref, d, o, strehl_ratio] = sim2.CalcLoss();
 disp("Done Simulating");
+lossTime = toc(lossTimer);
 
 %%
 Sparam = lensmodel.CalcSParam(f);
@@ -276,11 +283,11 @@ disp(strcat("Focal Length: ", num2str(focal_length), "mm"));
 disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm : AR ", num2str(AR_thickness), "mm + phase ", num2str(phase_thickness), "mm"));
 micron_tracespace = true;
 if (micron_tracespace)
-    tracespace = 0.003;
+    tracespace = 0.002;
     disp(strcat("Min Feature Size: ", num2str(tracespace * 1000), " micron"));
 else
     mil_to_mm = 0.0254;
-    tracespace = 3 * mil_to_mm;
+    tracespace = 2 * mil_to_mm;
     disp(strcat("Min Feature Size: ", num2str(tracespace / mil_to_mm), " mil"));
 end
 
@@ -289,3 +296,5 @@ disp(strcat("Est. Layer Spacing: ", num2str(layerspacing), "mm"));
 disp(strcat("Est. Layer Count: ", num2str(designer.total_thickness/layerspacing)));
 
 disp(strcat("Bandwidth (50% Strehl): ", num2str(bwminfreq, '%.4g'), " to ", num2str(bwmaxfreq, '%.4g'), " GHz"));
+
+disp(strcat("Loss Calculation Time: ", num2str(lossTime), "s"));
