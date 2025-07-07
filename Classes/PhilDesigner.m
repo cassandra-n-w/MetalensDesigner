@@ -315,10 +315,14 @@ classdef PhilDesigner < handle
 
             [thickness, AR_thickness, phase_thickness] = PhilDesigner.calcMinThickness(lamb_x, pathlength_diff, obj.n_min, n_max);
 
+            obj.SetThickness(thickness);
+        end
+        
+        function SetThickness(obj, thickness)
             obj.total_thickness = thickness;
             obj.lens_model.layer_thicknesses = thickness;
         end
-        
+
         function SetZoneBounds(obj, bounds, jumpsizes)
             % bounds are the locations (in mm pathlength) of the jumps, jumpsizes
             % is how many mm to jump.
