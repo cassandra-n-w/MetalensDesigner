@@ -307,17 +307,29 @@ classdef PhilDesigner < handle
         end
 
         function [thickness, AR_thickness, phase_thickness] = MinimizeThickness(obj)
+            [thickness, AR_thickness, phase_thickness] = obj.MinimizeThicknessVarNmin(obj.n_min);
+        end
+
+        function [thickness, AR_thickness, phase_thickness] = MinimizeThicknessVarNmin(obj, nmin)
             lamb_x = Constants.c/obj.sim.designfrequency;
             n_max = obj.n0;
 
             r = 0:(lamb_x / 20):obj.lens_model.diameter;
             pathlength_diff = min(obj.PathLengthInterp(r)) - max(obj.PathLengthInterp(r));
 
-            [thickness, AR_thickness, phase_thickness] = PhilDesigner.calcMinThickness(lamb_x, pathlength_diff, obj.n_min, n_max);
+            [thickness, AR_thickness, phase_thickness] = PhilDesigner.calcMinThickness(lamb_x, pathlength_diff, nmin, n_max);
 
             obj.SetThickness(thickness);
         end
         
+        function [thickness, AR_thickness, phase_thickness] = MinimizeThicknessRelaxed(obj)
+            [thickness, AR_thickness, phase_thickness] = obj.MinimizeThicknessVarNmin(sqrt(obj.n_min));
+        end
+
+        function [thickness, AR_thickness, phase_thickness] = MinimizeThicknessHyperRelaxed(obj)
+            [thickness, AR_thickness, phase_thickness] = obj.MinimizeThicknessVarNmin(1);
+        end
+
         function SetThickness(obj, thickness)
             obj.total_thickness = thickness;
             obj.lens_model.layer_thicknesses = thickness;
@@ -336,6 +348,7 @@ classdef PhilDesigner < handle
         end
 
         function ZoneBoundsEveryTwoPiSkipCenter(obj, skip_n)
+            % skip zone boundaries in the center
             pathmax = obj.PathLengthInterpRaw(obj.lens_model.diameter/2);
             lamb_x = Constants.c/obj.sim.designfrequency;
 
@@ -344,6 +357,24 @@ classdef PhilDesigner < handle
             for i = (1+skip_n):jumpcount
                 bounds(i) = i * lamb_x;
                 jump(i) = lamb_x;
+            end
+
+            obj.SetZoneBounds(bounds, jump);
+        end
+
+        function ZoneBoundsEveryNTwoPi(obj, N)
+            % do zones of an integer multiple of two pi
+            assert(N == round(N));
+            pathmax = obj.PathLengthInterpRaw(obj.lens_model.diameter/2);
+            lamb_x = Constants.c/obj.sim.designfrequency;
+
+            jumpcount = floor(pathmax / (lamb_x));
+
+            iterations = N:N:jumpcount;
+            
+            for i = iterations
+                bounds(i) = i * lamb_x;
+                jump(i) = N*lamb_x;
             end
 
             obj.SetZoneBounds(bounds, jump);

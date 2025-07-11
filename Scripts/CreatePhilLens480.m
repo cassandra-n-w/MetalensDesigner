@@ -1,8 +1,8 @@
 
 
 f = 182.5e9; % 480GHz central frequency
-numfreqs=50;
-freqs = linspace(f*0.8, f*1.2, numfreqs);
+numfreqs=300;
+freqs = linspace(f*0.2, f*2.0, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
 lambda = Constants.c/f;
@@ -56,20 +56,23 @@ plot(squaresize, index_adhitya);
 
 %%
 disp("Fresnelify")
-designer.ZoneBoundsEveryTwoPiSkipCenter(13);
+%designer.ZoneBoundsEveryTwoPiSkipCenter(13);
+designer.ZoneBoundsEveryNTwoPi(13);
 
 %%
 disp("Minimize lens thickness");
-[min_thickness, AR_thickness, phase_thickness] = designer.MinimizeThickness();
+[min_thickness, AR_thickness, phase_thickness] = designer.MinimizeThicknessRelaxed();
 
-disp("ALTERING THICKNESS");
-min_thickness = min_thickness*0.65;
-designer.SetThickness(min_thickness);
+%disp("ALTERING THICKNESS");
+%min_thickness = min_thickness*0.65;
+%designer.SetThickness(min_thickness);
 
 %designer.DesignDielectricGrinDiscretizeZ(11);
 disp("Designing Lens");
 %designer.DesignDielectricGrinDiscretizeZ(150);
 designer.DesignDielectricGrin();
+
+disp([min_thickness, AR_thickness, phase_thickness]);
 
 %% save design's phase output for comparison purposes.
 %[~] = lensmodel.CalcSParam(freqs);
