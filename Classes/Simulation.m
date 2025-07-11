@@ -73,7 +73,7 @@ classdef Simulation < handle
             obj.xvec = obj.x(1,:);
             obj.yvec = obj.y(:,1);
 
-            obj.E_current = zeros(obj.dims(1), obj.dims(2), length(obj.frequency));
+            %obj.E_current = zeros(obj.dims(1), obj.dims(2), length(obj.frequency));
         end
         
         function phasepattern = calc_ideal_phase(obj)
