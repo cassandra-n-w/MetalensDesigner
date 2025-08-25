@@ -205,7 +205,50 @@ classdef Simulation < handle
                 sinty(:, i) = linspace(min(kyi./k,[], "all"), max(kyi./k,[], "all"), size(kyi,2));
             end
         end
+
+        function [gain] = FarFieldMaxGainFrom13dBTaper(obj)
+            for i = 1:length(obj.frequency)
+                sim = Simulation(obj.lens_model, obj.frequency(i), obj.frequency(i));
+    
+                % taper = 1; % in units of dB
+                % r = obj.lens_model.diameter/2;
+                % beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
+                % 
+                % gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./beam_radius_squared);
+                [k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
+                foc = obj.lens_model.focal_length;
+                r = obj.lens_model.diameter/2;
+                taper = 13; % in units of dB
+                beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
+            
+                waist_squared = (beam_radius_squared - sqrt(beam_radius_squared.^2 - 4*(lambda * foc / pi).^2))/2;
+                gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./waist_squared);
+    
+                sim.initialize_E_field(gaussfunc);
+                sim.propagate(foc);
+    
+                sim.lensTransform();
+                sim.lensCircularMaskTransform();
+    
+                gain(i) = sim.FarFieldMaxGain(1);
+            end
+
+        end
+
+        function [gain] = FarFieldMaxGain(obj, i)
+            gain(i) = max(obj.FarFieldGainPatternFromIdx(i),[], "all");
+        end
         
+        function [gain] = FarFieldGainPatternFromIdx(obj, i)
+            %k = ks(i);
+            [field, kxi, kyi]= obj.FourierEtoA(obj.E_current(:,:,i));
+            farfield = fftshift(field); 
+            %kz = sqrt(k^2 - kxi.^2 - kyi.^2);
+            
+            gain = 4*pi*(abs(farfield).^2);
+        end
+
+
         % breaks down loss into reflection, dielectric, and optical
         function [reflect, dielectric, optical, strehl] = CalcLossVectorized(obj)
             [reflect, dielectric, optical, strehl] = obj.CalcLossByFreq(obj.frequency);
@@ -416,6 +459,11 @@ classdef Simulation < handle
             kx = 2*pi*kx / (dims(2)*dx);
             ky = 2*pi*ky / (dims(1)*dy);
         end
+
+        function [A, kx, ky] = FourierEtoA_unit_corrected(obj, E)
+        %FourierEtoA Convert an E-field [ E(x,y) ] to a vector potential A(kx, ky)
+            [A, kx, ky] = obj.FourierEtoA(E * obj.dx * obj.dy);
+        end
         
         
         function [E] = Unpad(obj, Ein)
@@ -544,6 +592,15 @@ classdef Simulation < handle
             E = conj(ifft2(Az));
         end
         
+        function [solidang] = VectorGridToSolidAngle(k, kx, ky)
+            kz = sqrt(k^2 - kx.^2 - ky.^2);
+
+            [az, el, r] = cart2sph(kx, ky, kz);
+            assert(r == k.*ones(size(r)));
+
+            
+
+        end
     end
 end
 

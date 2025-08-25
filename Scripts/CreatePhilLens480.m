@@ -1,25 +1,31 @@
 
-
-f = 182.5e9; % 480GHz central frequency
-numfreqs=300;
-freqs = linspace(f*0.2, f*2.0, numfreqs);
+lowerband = (175+182.5)/2;
+f = 24 * 1e9; % 480GHz central frequency
+numfreqs=100;
+freqs = linspace(f*0.2, f*1.8, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
 lambda = Constants.c/f;
+lambdas = Constants.c./freqs;
 %gridding size
 %g=0.11992; % 0.11992mm ; this should be equal to lambda(500GHz, free space)/5
 g = 0.2 * lambda;
 %g=lambda*1;
 
-epsr_polyimide = 3.4;
+% CHANGED TO RO 5880
+epsr_polyimide = 2.2; % 3.4
+max_n = 7; % 6.5
 
 total_thickness = 4.05; %16mm total thickness
 
+density_gcm3 = 2.2; % g / cm^3
+density_kgmm3 = density_gcm3 / (1e6); % convert density to kg/mm^3
+
 % diameter of active lens area and structural lens area, respectively
-diameter = 1000;
+diameter = 3000;
 struct_diam = 1000;
 
-focal_length = 3000;
+focal_length = 9000;
 
 % total_thickness = 0.3; %16mm total thickness
 % 
@@ -36,7 +42,7 @@ lensmodel.DeclareTL_1Param();
 
 sim = Simulation(lensmodel, freqs, f);
 
-designer = PhilDesigner(lensmodel, sim, sqrt(epsr_polyimide), 6.5);
+designer = PhilDesigner(lensmodel, sim, sqrt(epsr_polyimide), max_n);
 
 
 
@@ -56,8 +62,9 @@ plot(squaresize, index_adhitya);
 
 %%
 disp("Fresnelify")
-%designer.ZoneBoundsEveryTwoPiSkipCenter(13);
-designer.ZoneBoundsEveryNTwoPi(13);
+%designer.ZoneBoundsEveryTwoPiSkipCenter(11);
+%designer.ZoneBoundsEveryNTwoPi(2);
+%designer.ZoneBoundsEveryTwoPi();
 
 %%
 disp("Minimize lens thickness");
@@ -94,7 +101,7 @@ disp("Not actually, skipping conversion");
 %% Tests on index calculation
 squaresize = linspace(0.01*g, 0.985*g, 500);
 
-epsr_polyimide = 3.4;
+%epsr_polyimide = 3.4;
 spacing = 2.5/150;
 alpha = 1.15;
 beta = 0.035;
@@ -122,6 +129,17 @@ plot(r, pathNaive, r, pathIdeal, r, pathIdealRaw);
 legend(["Naive","Ideal","Raw"]);
 
 % plots suggest not perfectly quadratic
+
+%%
+disp("Gain Simulation");
+
+gain = sim.FarFieldMaxGainFrom13dBTaper();
+
+
+%%
+
+dir_diff_limit=20.*log10(pi*lensmodel.diameter./lambdas);
+plot(freqs/1e9, pow2db(gain),freqs/1e9, dir_diff_limit);
 
 %% 
 disp("Simulate");
@@ -284,7 +302,11 @@ hold off;
 disp(strcat("Diameter: ", num2str(diameter), "mm"));
 disp(strcat("Focal Length: ", num2str(focal_length), "mm"));
 disp(strcat("Thickness: ", num2str(designer.total_thickness), "mm : AR ", num2str(AR_thickness), "mm + phase ", num2str(phase_thickness), "mm"));
-micron_tracespace = true;
+
+weight = pi * (diameter/2)^2 * designer.total_thickness * density_kgmm3;
+disp(strcat("Weight: ", num2str(weight), "kg"));
+
+micron_tracespace = false;
 if (micron_tracespace)
     tracespace = 0.002;
     disp(strcat("Min Feature Size: ", num2str(tracespace * 1000), " micron"));
@@ -294,10 +316,16 @@ else
     disp(strcat("Min Feature Size: ", num2str(tracespace / mil_to_mm), " mil"));
 end
 
+tand = 0.015;
+lambda = Constants.c/f; %lambda in mm
+k = 2*pi/(lambda/sqrt(epsr_polyimide));
+alpha_d = k * tand / 2; % loss  
+loss_lowerbound = exp(-2*alpha_d*designer.total_thickness);
+
 layerspacing = designer.GetMinLayerSpacing(alpha, beta, tracespace);
 disp(strcat("Est. Layer Spacing: ", num2str(layerspacing), "mm"));
 disp(strcat("Est. Layer Count: ", num2str(designer.total_thickness/layerspacing)));
-
+disp(strcat("Upper bound dielectric efficiency: ", num2str(loss_lowerbound*100), "%"));
 disp(strcat("Bandwidth (50% Strehl): ", num2str(bwminfreq, '%.4g'), " to ", num2str(bwmaxfreq, '%.4g'), " GHz"));
 
 disp(strcat("Loss Calculation Time: ", num2str(lossTime), "s"));

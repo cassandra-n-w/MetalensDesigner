@@ -3,6 +3,7 @@ f = 480e9;
 lambda = Constants.c / f;
 
 n_poly = 1.87;
+n_poly = sqrt(2.2);
 
 n_max_hypothetical = n_poly^2 + sqrt(n_poly^4 - n_poly^2);
 
