@@ -241,11 +241,28 @@ classdef Simulation < handle
         
         function [gain] = FarFieldGainPatternFromIdx(obj, i)
             %k = ks(i);
-            [field, kxi, kyi]= obj.FourierEtoA(obj.E_current(:,:,i));
-            farfield = fftshift(field); 
-            %kz = sqrt(k^2 - kxi.^2 - kyi.^2);
+            [k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
+            gain = obj.FarFieldGainPattern(obj.E_current(:,:,i), k);
+        end
+
+        function [gain] = FarFieldGainPattern(obj, Efield, k)
+            %k = ks(i);
+            %[k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
+            [field, kxi, kyi]= obj.FourierEtoA(Efield);
+            lambda = 2*pi/k;
             
-            gain = 4*pi*(abs(farfield).^2);
+            farfield = (obj.dx / lambda) * fftshift(field); 
+            %kx = fftshift(kxi,2);
+            %ky = fftshift(kyi,1);
+            %kz = sqrt(k^2 - kxi.^2 - kyi.^2);
+            %ind = (kz ~= real(kz));
+            %kz(ind) = 0;
+            
+            %[azimuth,elevation,r] = cart2sph(kxi,kyi,kz);
+            %U = abs(field).^2;
+            Prad = 1;%trapz(azimuth(:,1),trapz(azimuth(1,:),U.*sin(abs(elevation)),2),1);
+
+            gain = 4*pi*(abs(farfield).^2)/Prad;
         end
 
 
@@ -559,6 +576,10 @@ classdef Simulation < handle
             power = trapz(trapz(abs(efield .* conj(efield))));
         end
         
+        function power = calc_power2(efield)
+            power = trapz(trapz(abs(efield).^2));
+        end
+
         function [normalized] = normalize(efield)
              power = abs(efield .* conj(efield));
              totalpower = trapz(trapz(power));
@@ -601,6 +622,11 @@ classdef Simulation < handle
             
 
         end
+        
+        function [field] = UniformCircle(x,y,r)
+            field = x.^2 + y.^2 < r.^2;
+        end
+        
     end
 end
 

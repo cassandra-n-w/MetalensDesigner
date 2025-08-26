@@ -1,7 +1,7 @@
 
 lowerband = (175+182.5)/2;
 f = 24 * 1e9; % 480GHz central frequency
-numfreqs=100;
+numfreqs=30;
 freqs = linspace(f*0.2, f*1.8, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
 
@@ -22,10 +22,10 @@ density_gcm3 = 2.2; % g / cm^3
 density_kgmm3 = density_gcm3 / (1e6); % convert density to kg/mm^3
 
 % diameter of active lens area and structural lens area, respectively
-diameter = 3000;
+diameter = 300;
 struct_diam = 1000;
 
-focal_length = 9000;
+focal_length = 900;
 
 % total_thickness = 0.3; %16mm total thickness
 % 
