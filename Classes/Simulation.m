@@ -208,59 +208,76 @@ classdef Simulation < handle
 
         function [gain] = FarFieldMaxGainFrom13dBTaper(obj)
             for i = 1:length(obj.frequency)
-                sim = Simulation(obj.lens_model, obj.frequency(i), obj.frequency(i));
-    
-                % taper = 1; % in units of dB
-                % r = obj.lens_model.diameter/2;
-                % beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
-                % 
-                % gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./beam_radius_squared);
-                [k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
-                foc = obj.lens_model.focal_length;
-                r = obj.lens_model.diameter/2;
-                taper = 13; % in units of dB
-                beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
-            
-                waist_squared = (beam_radius_squared - sqrt(beam_radius_squared.^2 - 4*(lambda * foc / pi).^2))/2;
-                gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./waist_squared);
-    
-                sim.initialize_E_field(gaussfunc);
-                sim.propagate(foc);
-    
-                sim.lensTransform();
-                sim.lensCircularMaskTransform();
-    
-                gain(i) = sim.FarFieldMaxGain(1);
+                gain(i) = obj.FarFieldMaxGainFromTaperAtFreq(13, obj.frequency(i));
             end
+        end
 
+        function [gain] = FarFieldMaxGainFromTaperAtFreq(obj, taperdB, frequency)
+            gain = max(obj.FarFieldGainPatternFromTaperAtFreq(taperdB, frequency), [],"all");
+        end
+
+        function [gainPattern, theta, phi] = FarFieldGainPatternFromTaperAtFreq(obj, taperdB, frequency)
+            sim = Simulation(obj.lens_model, frequency, frequency);
+
+            % taper = 1; % in units of dB
+            % r = obj.lens_model.diameter/2;
+            % beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
+            % 
+            % gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./beam_radius_squared);
+            [k, lambda] = Simulation.f_to_k_lambda(frequency);
+            foc = obj.lens_model.focal_length;
+            r = obj.lens_model.diameter/2;
+            taper = taperdB; % in units of dB
+            beam_radius_squared = 20 * log10(exp(1)) * r^2 / (taper);
+        
+            waist_squared = (beam_radius_squared - sqrt(beam_radius_squared.^2 - 4*(lambda * foc / pi).^2))/2;
+            gaussfunc = @(x, y, f) exp(-(x.^2+y.^2)./waist_squared);
+
+            sim.initialize_E_field(gaussfunc);
+            sim.propagate(foc);
+
+            sim.lensTransform();
+            sim.lensCircularMaskTransform();
+
+            [gainPattern, theta, phi] = sim.FarFieldGainPatternFromIdx(1);
+            
         end
 
         function [gain] = FarFieldMaxGain(obj, i)
             gain(i) = max(obj.FarFieldGainPatternFromIdx(i),[], "all");
         end
         
-        function [gain] = FarFieldGainPatternFromIdx(obj, i)
+        function [gain, theta, phi] = FarFieldGainPatternFromIdx(obj, i)
             %k = ks(i);
             [k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
-            gain = obj.FarFieldGainPattern(obj.E_current(:,:,i), k);
+            [gain, theta, phi] = obj.FarFieldGainPattern(obj.E_current(:,:,i), k);
         end
 
-        function [gain] = FarFieldGainPattern(obj, Efield, k)
+        function [gain, theta, phi] = FarFieldGainPattern(obj, Efield, k)
+        % NOTE: I THINK THIS IS WRONG AT SUFFICIENTLY LARGE ANGLES. YOU
+        % MIGHT HAVE TO DIVIDE BY A TANGENT OR SOMETHING
+
             %k = ks(i);
             %[k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
             [field, kxi, kyi]= obj.FourierEtoA(Efield);
             lambda = 2*pi/k;
             
-            farfield = (obj.dx / lambda) * fftshift(field); 
-            %kx = fftshift(kxi,2);
-            %ky = fftshift(kyi,1);
-            %kz = sqrt(k^2 - kxi.^2 - kyi.^2);
-            %ind = (kz ~= real(kz));
-            %kz(ind) = 0;
+             % mathematically I don't know why this works, but it sure does
+             % seem to produce correct results
+            fuckyfactor = (obj.dx / lambda);
+            farfield = fuckyfactor * fftshift(field); 
+            kx = fftshift(kxi,2);
+            ky = fftshift(kyi,1);
+            kz = sqrt(k^2 - kx.^2 - ky.^2);
+            ind = (kz ~= real(kz));
+            kz(ind) = 0;
             
-            %[azimuth,elevation,r] = cart2sph(kxi,kyi,kz);
+            [phi,theta,r] = cart2sph(kx,ky,kz);
+            theta = pi/2 - theta; % convert from elevation to inclination
             %U = abs(field).^2;
             Prad = 1;%trapz(azimuth(:,1),trapz(azimuth(1,:),U.*sin(abs(elevation)),2),1);
+
+            % Simulation.calc_power(farfield);
 
             gain = 4*pi*(abs(farfield).^2)/Prad;
         end
