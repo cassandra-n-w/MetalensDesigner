@@ -254,9 +254,6 @@ classdef Simulation < handle
         end
 
         function [gain, theta, phi] = FarFieldGainPattern(obj, Efield, k)
-        % NOTE: I THINK THIS IS WRONG AT SUFFICIENTLY LARGE ANGLES. YOU
-        % MIGHT HAVE TO DIVIDE BY A TANGENT OR SOMETHING
-
             %k = ks(i);
             %[k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
             [field, kxi, kyi]= obj.FourierEtoA(Efield);
@@ -276,8 +273,6 @@ classdef Simulation < handle
             theta = pi/2 - theta; % convert from elevation to inclination
             %U = abs(field).^2;
             Prad = 1;%trapz(azimuth(:,1),trapz(azimuth(1,:),U.*sin(abs(elevation)),2),1);
-
-            % Simulation.calc_power(farfield);
 
             gain = 4*pi*(abs(farfield).^2)/Prad;
         end
@@ -548,6 +543,21 @@ classdef Simulation < handle
     methods(Static)
         function [minfreq, maxfreq] = calc_bandwidth(measurement, threshhold, frequencies)
             [centerval, centerindex] = max(measurement);
+            centerfreq = frequencies(centerindex);
+
+            [minfreq, maxfreq] = Simulation.calc_bandwidth_general(measurement, threshhold, frequencies, centerfreq, false);
+        end
+
+        function [minfreq, maxfreq] = calc_bandwidth_general(measurement, threshhold, frequencies, centerfreq, relative)
+            [centerval, centerindex] = Simulation.FindNearest(frequencies, centerfreq);
+
+            if (nargin > 4)
+                if (relative)
+                    [peaks, indices] = findpeaks(measurement);
+                    [peakfreq, peakidx] = Simulation.FindNearest(frequencies(indices), centerfreq);
+                    threshhold = threshhold * peaks(peakidx);
+                end
+            end
 
             if (centerval < threshhold)
                 minfreq = NaN;
@@ -635,13 +645,16 @@ classdef Simulation < handle
 
             [az, el, r] = cart2sph(kx, ky, kz);
             assert(r == k.*ones(size(r)));
-
-            
-
         end
         
         function [field] = UniformCircle(x,y,r)
             field = x.^2 + y.^2 < r.^2;
+        end
+
+        function [value, index] = FindNearest(frequencies, frequency)
+            indices = 1:length(frequencies);
+            index = interp1(frequencies, indices, frequency, "nearest", "extrap");
+            value = frequencies(index);
         end
         
     end

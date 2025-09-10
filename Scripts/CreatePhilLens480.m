@@ -1,6 +1,6 @@
 
 lowerband = (175+182.5)/2;
-f = 24 * 1e9; % 480GHz central frequency
+f = 7.8 * 1e9; % 480GHz central frequency
 numfreqs=30;
 freqs = linspace(f*0.2, f*1.8, numfreqs);
 %freqs = linspace(451e9, 499e9, numfreqs);
@@ -22,10 +22,10 @@ density_gcm3 = 2.2; % g / cm^3
 density_kgmm3 = density_gcm3 / (1e6); % convert density to kg/mm^3
 
 % diameter of active lens area and structural lens area, respectively
-diameter = 300;
-struct_diam = 1000;
+diameter = 3000;
+struct_diam = 3000;
 
-focal_length = 900;
+focal_length = 9000;
 
 % total_thickness = 0.3; %16mm total thickness
 % 
@@ -64,7 +64,7 @@ plot(squaresize, index_adhitya);
 disp("Fresnelify")
 %designer.ZoneBoundsEveryTwoPiSkipCenter(11);
 %designer.ZoneBoundsEveryNTwoPi(2);
-%designer.ZoneBoundsEveryTwoPi();
+designer.ZoneBoundsEveryTwoPi();
 
 %%
 disp("Minimize lens thickness");
@@ -140,6 +140,10 @@ gain = sim.FarFieldMaxGainFrom13dBTaper();
 
 dir_diff_limit=20.*log10(pi*lensmodel.diameter./lambdas);
 plot(freqs/1e9, pow2db(gain),freqs/1e9, dir_diff_limit);
+xlabel("Frequency (GHz)");
+ylabel("Gain (dBi)");
+legend(["Lens", "Diffraction Limit"]);
+title("Gain Antenna Illuminated by 13 dB Edge Taper");
 
 %% 
 disp("Simulate");
@@ -329,3 +333,11 @@ disp(strcat("Upper bound dielectric efficiency: ", num2str(loss_lowerbound*100),
 disp(strcat("Bandwidth (50% Strehl): ", num2str(bwminfreq, '%.4g'), " to ", num2str(bwmaxfreq, '%.4g'), " GHz"));
 
 disp(strcat("Loss Calculation Time: ", num2str(lossTime), "s"));
+
+[maxgain, maxfreqi] = max(gain);
+maxfreq = freqs(maxfreqi);
+
+[minbwgain, maxbwgain] = Simulation.calc_bandwidth_general(gain, 0.5, freqs, f, true);
+
+disp(strcat("Max Gain: ", num2str(pow2db(maxgain)), " dBi at ", num2str(maxfreq/1e9), " GHz"));
+disp(strcat("Gain 3dB Bandwidth: ", num2str(minbwgain/1e9), " GHz to ", num2str(maxbwgain/1e9), " Ghz"))
