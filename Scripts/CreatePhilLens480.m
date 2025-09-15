@@ -89,8 +89,8 @@ phase_ideal_design = angle(lensmodel.CalcSParam(f));
 disp("Converting Lens to Metamaterial Design");
 polyimide_dielectric = Dielectric(3.50 * ones(size(freqs)), 0.015, freqs, 0.005, 0.015);
 lossless_polyimide = Dielectric(3.50 * ones(size(freqs)), 0.0, freqs, 0.005, 0.015);
-aluminum_metaatom = Element('..\\..\\HFSS Models\\Polyimide Wideband 3_4 200nm Aluminum g0p2 v99 touchstone');
-aluminum_old = Element('..\\..\\HFSS Models\\Polyimide 3_4 Aluminum g0p2 v99 touchstone');
+aluminum_metaatom = Element('../../HFSS Models/Polyimide Wideband 3_4 200nm Aluminum g0p2 v99 touchstone');
+aluminum_old = Element('../../HFSS Models/Polyimide 3_4 Aluminum g0p2 v99 touchstone');
 proto_tl = ProtoTL(aluminum_metaatom, lossless_polyimide);
 tracespace = 0.003; % 3um converted to mm.
 
@@ -138,8 +138,11 @@ gain = sim.FarFieldMaxGainFrom13dBTaper();
 
 %%
 
-dir_diff_limit=20.*log10(pi*lensmodel.diameter./lambdas);
-plot(freqs/1e9, pow2db(gain),freqs/1e9, dir_diff_limit);
+dir_diff_limit = Simulation.DiffractionLimit(lensmodel.diameter, lambdas);
+plot(freqs/1e9, pow2db(gain),freqs/1e9, pow2db(dir_diff_limit));
+
+aperture_efficiency = gain./dir_diff_limit;
+
 xlabel("Frequency (GHz)");
 ylabel("Gain (dBi)");
 legend(["Lens", "Diffraction Limit"]);
@@ -340,4 +343,12 @@ maxfreq = freqs(maxfreqi);
 [minbwgain, maxbwgain] = Simulation.calc_bandwidth_general(gain, 0.5, freqs, f, true);
 
 disp(strcat("Max Gain: ", num2str(pow2db(maxgain)), " dBi at ", num2str(maxfreq/1e9), " GHz"));
-disp(strcat("Gain 3dB Bandwidth: ", num2str(minbwgain/1e9), " GHz to ", num2str(maxbwgain/1e9), " Ghz"))
+disp(strcat("Gain 3dB Bandwidth: ", num2str(minbwgain/1e9), " GHz to ", num2str(maxbwgain/1e9), " Ghz"));
+
+[maxeff, maxfreqi] = max(aperture_efficiency);
+maxfreq = freqs(maxfreqi);
+
+[minbweff, maxbweff] = Simulation.calc_bandwidth_general(aperture_efficiency, 0.5, freqs, f, false);
+
+disp(strcat("Max Aperture Efficiency: ", num2str(maxeff * 100), "% at ", num2str(maxfreq/1e9), " GHz"));
+disp(strcat("Aperture Efficiency 50% BW: ", num2str(minbweff/1e9), " GHz to ", num2str(maxbweff/1e9), " Ghz"))
