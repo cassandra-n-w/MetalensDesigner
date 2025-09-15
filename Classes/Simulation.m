@@ -657,9 +657,54 @@ classdef Simulation < handle
             value = frequencies(index);
         end
         
+        % single frequency
+        function [beamgrowthanglex, beamgrowthangley] = FitGaussianToFarFieldPower(farfield_power, theta, phi)
+            %fit x, then y
+            
+            [beamgrowthanglex, beamgrowthangley] = Simulation.FitGaussianToFarFieldE(sqrt(abs(farfield_power)), theta, phi);
+        end
+
+        % single frequency
+        function [beamgrowthanglex, beamgrowthangley] = FitGaussianToFarFieldE(farfield_e, theta, phi)
+            %fit x, then y
+            
+            farfield_cutx = abs(Simulation.ConstXCut(farfield_e));
+            thetacutx = Simulation.InvertThetas(Simulation.ConstXCut(theta));
+
+            gaussfit = fit(thetacutx', farfield_cutx, 'gauss1', 'StartPoint', [0.01, 0, 1.0]);
+            beamgrowthanglex = gaussfit.c1;
+
+            farfield_cuty = abs(Simulation.ConstYCut(farfield_e));
+            thetacuty = Simulation.InvertThetas(Simulation.ConstYCut(theta));
+
+            gaussfit = fit(thetacuty', farfield_cuty', 'gauss1', 'StartPoint', [0.01, 0, 1.0]);
+            beamgrowthangley = gaussfit.c1;
+        end
+
+        function [theta] = InvertThetas(theta_in)
+            center = (length(theta_in)+1)/2;
+            tempflip = reshape(1:length(theta_in), 1, []);
+            theta_in = reshape(theta_in, 1, []);
+            theta = theta_in .* 2 .* ((tempflip > center) - 0.5);
+            assert(theta(end) == theta_in(end));
+        end
+        
         % calculate diffraction limited directivity in *linear* units
         function [directivity] = DiffractionLimit(diameter, lambdas)
             directivity = (diameter .* pi ./ lambdas) .^ 2;
+        end
+
+        % takes the central x cut of the input with constant x
+        function [xcut] = ConstXCut(input)
+            tempsize = size(input);
+            centeridx = round((1+tempsize(1))/2);
+            xcut = input(:, centeridx, :, :);
+        end
+
+        function [ycut] = ConstYCut(input)
+            tempsize = size(input);
+            centeridx = round((1+tempsize(1))/2);
+            ycut = input(centeridx, :, :, :);
         end
     end
 end

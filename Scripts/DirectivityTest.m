@@ -24,6 +24,7 @@ maxgain./expectedgain;
 gainsize = size(gain);
 
 
+
 [mintheta, thetaidx] = min(theta, [], 1);
 [mintheta, minrow] = min(mintheta);
 selectPos = ((phi(:,minrow) > 0) - 0.5) * 2;
@@ -33,6 +34,9 @@ assert(all(abs(selectPos) == ones(size(selectPos))));
 plot(rad2deg(theta(:, minrow)).*selectPos, pow2db(gain(:,minrow)));
 ylim([0,maxgaindb]);
 
+[thetax, thetay] = Simulation.FitGaussianToFarFieldPower(gain, theta, phi);
+waist = lambda/(pi * tan(thetax))
+diam/2
 %%
 
 efield = sim.E_current(:,:,1);
