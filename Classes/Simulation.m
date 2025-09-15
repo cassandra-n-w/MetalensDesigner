@@ -657,6 +657,10 @@ classdef Simulation < handle
             value = frequencies(index);
         end
         
+        % calculate diffraction limited directivity in *linear* units
+        function [directivity] = DiffractionLimit(diameter, lambdas)
+            directivity = (diameter .* pi ./ lambdas) .^ 2;
+        end
     end
 end
 
