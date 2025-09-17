@@ -216,7 +216,23 @@ classdef Simulation < handle
             gain = max(obj.FarFieldGainPatternFromTaperAtFreq(taperdB, frequency), [],"all");
         end
 
-        function [gainPattern, theta, phi] = FarFieldGainPatternFromTaperAtFreq(obj, taperdB, frequency)
+        function [gain, gaussianity] = FarFieldMaxGainAndGaussianity(obj, taperdB)
+            for i = 1:length(obj.frequency)
+                [gainpattern, theta, phi, nearfield] = obj.FarFieldGainPatternFromTaperAtFreq(taperdB, obj.frequency(i));
+                gain(i) = max(gainpattern, [],"all");
+                gaussianity(i) = obj.GaussianitySingleFreq(gainpattern, theta, phi, nearfield, i);
+            end
+        end
+
+        function [gaussianity] = GaussianitySingleFreq(obj, farfield_gainpattern, theta, phi, nearfield, i)
+            [anglex, angley] = Simulation.FitGaussianToFarFieldPower(farfield_gainpattern, theta, phi);
+            [k, lambda] = Simulation.f_to_k_lambda(obj.frequency(i));
+            waist = Simulation.FarFieldToNearFieldGaussian(anglex, angley, lambda);
+            nearfield_gaussian = Simulation.FlatGaussian(obj.x, obj.y, waist);
+            gaussianity = Simulation.CalculatePowerCoupling(nearfield, nearfield_gaussian);
+        end
+
+        function [gainPattern, theta, phi, nearfield] = FarFieldGainPatternFromTaperAtFreq(obj, taperdB, frequency)
             sim = Simulation(obj.lens_model, frequency, frequency);
 
             % taper = 1; % in units of dB
@@ -238,6 +254,8 @@ classdef Simulation < handle
 
             sim.lensTransform();
             sim.lensCircularMaskTransform();
+
+            nearfield = sim.E_current(:,:,1);
 
             [gainPattern, theta, phi] = sim.FarFieldGainPatternFromIdx(1);
             
@@ -651,6 +669,10 @@ classdef Simulation < handle
             field = x.^2 + y.^2 < r.^2;
         end
 
+        function [field] = FlatGaussian(x, y, w)
+            field = exp(-(x.^2 + y.^2) / w.^2);
+        end
+
         function [value, index] = FindNearest(frequencies, frequency)
             indices = 1:length(frequencies);
             index = interp1(frequencies, indices, frequency, "nearest", "extrap");
@@ -679,6 +701,26 @@ classdef Simulation < handle
 
             gaussfit = fit(thetacuty', farfield_cuty', 'gauss1', 'StartPoint', [0.01, 0, 1.0]);
             beamgrowthangley = gaussfit.c1;
+        end
+
+        function [waist] = FarFieldToNearFieldGaussian(beamgrowthanglex, beamgrowthangley, lambda)
+            w1 = lambda/(pi * tan(beamgrowthanglex));
+            w2 = lambda/(pi * tan(beamgrowthangley));
+            waist = (w1+w2)/2;
+        end
+
+        %function [gaussianity] = CalculateGaussianity(nearfield, waist)
+            %gaussianity = Simulation.CalculatePowerCoupling(nearfield, )
+        %end
+
+        function [coupling] = CalculateFieldCoupling(field1, field2)
+            integrand = (Simulation.normalize(field1) .* conj(Simulation.normalize(field2)));
+    
+            coupling = trapz(trapz(integrand,1),2);
+        end
+
+        function [coupling] = CalculatePowerCoupling(field1, field2)
+            coupling = abs(Simulation.CalculateFieldCoupling(field1, field2)).^2;
         end
 
         function [theta] = InvertThetas(theta_in)

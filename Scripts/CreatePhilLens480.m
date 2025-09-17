@@ -133,7 +133,7 @@ legend(["Naive","Ideal","Raw"]);
 %%
 disp("Gain Simulation");
 
-gain = sim.FarFieldMaxGainFrom13dBTaper();
+[gain, gaussianity] = sim.FarFieldMaxGainAndGaussianity(13);
 
 
 %%
@@ -147,6 +147,9 @@ xlabel("Frequency (GHz)");
 ylabel("Gain (dBi)");
 legend(["Lens", "Diffraction Limit"]);
 title("Gain Antenna Illuminated by 13 dB Edge Taper");
+
+%%
+plot(freqs/1e9, gaussianity, freqs/1e9, aperture_efficiency);
 
 %% 
 disp("Simulate");
@@ -352,3 +355,11 @@ maxfreq = freqs(maxfreqi);
 
 disp(strcat("Max Aperture Efficiency: ", num2str(maxeff * 100), "% at ", num2str(maxfreq/1e9), " GHz"));
 disp(strcat("Aperture Efficiency 50% BW: ", num2str(minbweff/1e9), " GHz to ", num2str(maxbweff/1e9), " Ghz"))
+
+[maxgauss, maxfreqi] = max(gaussianity);
+maxfreq = freqs(maxfreqi);
+
+[minbwgauss, maxbwgauss] = Simulation.calc_bandwidth_general(gaussianity, 0.5, freqs, f, false);
+
+disp(strcat("Max Gaussianity: ", num2str(maxgauss * 100), "% at ", num2str(maxfreq/1e9), " GHz"));
+disp(strcat("Gaussianity 50% BW: ", num2str(minbwgauss/1e9), " GHz to ", num2str(maxbwgauss/1e9), " Ghz"))
